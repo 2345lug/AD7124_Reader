@@ -1,0 +1,58 @@
+We are making a single device for internal measurement task without any plan to sell it. 
+There is a board made already with the following arrangement:
+
+MCU is STM32G071G8U6
+5pcs of AD7124-4 chips in star topology. PA1,PA6, PA7 used.
+Chip Select for AD-1 is at PB0, for AD-2 at PB1, for AD-3 at PB3, AD-4 at PB4, AD-5 at PB5.
+Syncronization signal for AD chips is shared via PC6.
+
+SD-card is conneted via SPI2 (PA0, PA3, PA4). CS for SD is PA2. Detect pin is PA8.
+PA11 and PA12 booked for I2C (no use now). 
+UART happens at PB6, PB7
+PB8 and PA5 used as general purpose inputs.
+PA15 is used to monitor the precence of power.
+
+I will share the STM32Cube project.
+
+
+Every AD7124-4 have 2 2-wire RTDs (Pt1000) connected as described at Application Note CN0383 at figure 30. Chip configuration is following: 
+AIN0: Not used
+AIN1: Not used
+AIN2: RTD1 IOUT
+AIN3: RTD1 Positive
+AIN4: RTD1 Negative
+AIN5: RTD2 IOUT
+AIN6: RTD2 Positive
+AIN7: RTD2 Negative
+REF+: Reference resistor positive
+REF-: Reference resistor negative
+
+Reference resistor value is 2490 Ohm +/- 0.1%
+The headroom resistance value is 344 Ohm.
+The gain for each channel should be set as 1.
+The current shold be set as 0.4mA.
+No filtering required since data should be measured as fast as possible
+
+
+The measurement sequence is described at page 15 of CN0383.
+
+
+To communicate with AD7124 the following library should fit:
+https://github.com/epsilonrt/ad7124
+
+It have already the full measurement and processing sequence and require the channel configuration only.
+But it's made for Arduino platform with the arduino-based SPI driver implementation. The driver is made in a separate file and could be easely modified.
+
+What the board should do:
+1. Wait for the trigger signal (Rising edge at PB8 OR Falling edge at PA5).
+2. Start the measurement cycle, creating the file at SD card, placing there a column-names strings for the readings, placing same string to the UART.
+3. Read temperatures of all RTDs. The measurements have to have smallest timing difference possible (use of SYNC may help)
+4. Place the measured values to the array that stores last N values (N will come from the available performance), write them to the SD-card file and UART using milliseconds from the measurement sequence start as timestamp.
+5. Repeat until next trigger signal (Rising edge at PB8 OR Falling edge at PA5).
+
+Notes:
+Trigger signals should be debounced. There will never be 2 triggers closer than 100ms
+
+The filename should consist the current date and time. To setup the date and time UART or special file at SD card could be used.
+
+In case of losing external power, the board shold swith off everything except the RTC clock. 
