@@ -1,5 +1,6 @@
 "./Core/Src/ad7124.o"
 "./Core/Src/ad7124_regs.o"
+"./Core/Src/delay.o"
 "./Core/Src/main.o"
 "./Core/Src/platform_support.o"
 "./Core/Src/spi.o"

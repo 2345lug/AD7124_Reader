@@ -7,6 +7,7 @@
 C_SRCS += \
 ../Core/Src/ad7124.c \
 ../Core/Src/ad7124_regs.c \
+../Core/Src/delay.c \
 ../Core/Src/main.c \
 ../Core/Src/platform_support.c \
 ../Core/Src/spi.c \
@@ -19,6 +20,7 @@ C_SRCS += \
 OBJS += \
 ./Core/Src/ad7124.o \
 ./Core/Src/ad7124_regs.o \
+./Core/Src/delay.o \
 ./Core/Src/main.o \
 ./Core/Src/platform_support.o \
 ./Core/Src/spi.o \
@@ -31,6 +33,7 @@ OBJS += \
 C_DEPS += \
 ./Core/Src/ad7124.d \
 ./Core/Src/ad7124_regs.d \
+./Core/Src/delay.d \
 ./Core/Src/main.d \
 ./Core/Src/platform_support.d \
 ./Core/Src/spi.d \

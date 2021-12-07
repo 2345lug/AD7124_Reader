@@ -1,0 +1,4 @@
+platform_support.c:62:5:__io_putchar	16	static
+platform_support.c:76:5:__io_getchar	16	static
+platform_support.c:93:9:getchar_nonblocking	16	static
+platform_support.c:110:6:toggle_activity_led	8	static

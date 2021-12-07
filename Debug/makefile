@@ -61,8 +61,8 @@ all: main-build
 main-build: SensorGrid_upd.elf secondary-outputs
 
 # Tool invocations
-SensorGrid_upd.elf: $(OBJS) $(USER_OBJS) /home/lug/Загрузки/Upwork/SPI/SensorGrid_upd/STM32G071G8UX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "SensorGrid_upd.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"/home/lug/Загрузки/Upwork/SPI/SensorGrid_upd/STM32G071G8UX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SensorGrid_upd.map" -Wl,--gc-sections -static -L"C:\Users\Danil Mikhaylov\Documents\STM32\Libraries" --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+SensorGrid_upd.elf: $(OBJS) $(USER_OBJS) /home/lug/STM32_Projects/AD7124_Lib/AD7124_Reader/STM32G071G8UX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "SensorGrid_upd.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"/home/lug/STM32_Projects/AD7124_Lib/AD7124_Reader/STM32G071G8UX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SensorGrid_upd.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

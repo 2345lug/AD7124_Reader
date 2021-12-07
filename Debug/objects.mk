@@ -5,5 +5,5 @@
 
 USER_OBJS :=
 
-LIBS := -lad7124
+LIBS :=
 

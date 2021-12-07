@@ -27,8 +27,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "AD7124.h"      /* AD7124 definitions */
-#include "AD7124_regs.h" /* We want to use the ad7124_regs array defined in ad7124_regs.h/.c */
+#include "ad7124.h"      /* AD7124 definitions */
+#include "ad7124_regs.h" /* We want to use the ad7124_regs array defined in ad7124_regs.h/.c */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -497,18 +497,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void ADC_INIT(){
-    /* Initialize AD7124 device. */
-    ret = AD7124_Setup(ad7124_handler, AD7124_SLAVE_ID, (ad7124_st_reg *)&ad7124_regs);
-    if (ret < 0)
-    {
-        /* AD7124 initialisation failed, check the value of ret! */
-    }
-    else
-    {
-        /* AD7124 initialization OK */
-    }
-}
+
 /* USER CODE END 4 */
 
 /**
