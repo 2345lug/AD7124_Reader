@@ -1,3 +1,0 @@
-spi.c:75:9:spi_init	16	static
-spi.c:94:9:spi_remove	16	static
-spi.c:110:9:spi_write_and_read	40	static

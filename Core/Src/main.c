@@ -110,7 +110,14 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  struct ad7124_dev my_ad7124;                    /* A new driver instance */
+  struct ad7124_dev *ad7124_handler = &my_ad7124; /* A driver handle to pass around */
+  enum ad7124_registers regNr;                       /* Variable to iterate through registers */
+  struct ad7124_init_param initParam;
 
+  long timeout = 1000;                               /* Number of tries before a function times out */
+  long ret = 0;                                      /* Return value */
+  long sample;                                       /* Stores raw value read from the ADC */
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -118,7 +125,35 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  /* Initialize AD7124 device. */
+	     ret = ad7124_setup(&ad7124_handler, &initParam);
+	     if (ret < 0)
+	     {
+	         /* AD7124 initialization failed, check the value of ret! */
+	     }
+	     else
+	     {
+	         /* AD7124 initialization OK */
+	     }
 
+	     /* Read all registers */
+	     for (regNr = AD7124_Status; (regNr < AD7124_REG_NO) && !(ret < 0); regNr++)
+	     {
+	         ret = ad7124_read_register(ad7124_handler, &ad7124_regs[regNr]);
+	     }
+
+	     /* Read data from the ADC */
+	     ret = ad7124_wait_for_conv_ready(ad7124_handler, timeout);
+	     if (ret < 0)
+	     {
+	 	/* Something went wrong, check the value of ret! */
+	     }
+
+	     ret = ad7124_read_data(ad7124_handler, &sample);
+	     if (ret < 0)
+	     {
+	         /* Something went wrong, check the value of ret! */
+	     }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
