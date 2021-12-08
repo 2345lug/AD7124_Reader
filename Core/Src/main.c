@@ -56,7 +56,8 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+uint8_t csPort = CS1_GPIO_Port;
+uint8_t csPin = CS1_Pin;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -118,6 +119,23 @@ int main(void)
   long timeout = 1000;                               /* Number of tries before a function times out */
   long ret = 0;                                      /* Return value */
   long sample;                                       /* Stores raw value read from the ADC */
+
+  ret = ad7124_setup(&ad7124_handler, &initParam);
+  	     if (ret < 0)
+  	     {
+  	         /* AD7124 initialization failed, check the value of ret! */
+  	     }
+  	     else
+  	     {
+  	         /* AD7124 initialization OK */
+  	     }
+
+  	     /* Read all registers */
+  	     for (regNr = AD7124_Status; (regNr < AD7124_REG_NO) && !(ret < 0); regNr++)
+  	     {
+  	         ret = ad7124_read_register(ad7124_handler, &ad7124_regs[regNr]);
+  	     }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -126,21 +144,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	  /* Initialize AD7124 device. */
-	     ret = ad7124_setup(&ad7124_handler, &initParam);
-	     if (ret < 0)
-	     {
-	         /* AD7124 initialization failed, check the value of ret! */
-	     }
-	     else
-	     {
-	         /* AD7124 initialization OK */
-	     }
 
-	     /* Read all registers */
-	     for (regNr = AD7124_Status; (regNr < AD7124_REG_NO) && !(ret < 0); regNr++)
-	     {
-	         ret = ad7124_read_register(ad7124_handler, &ad7124_regs[regNr]);
-	     }
 
 	     /* Read data from the ADC */
 	     ret = ad7124_wait_for_conv_ready(ad7124_handler, timeout);
