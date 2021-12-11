@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
 #include "ad7124.h"      /* AD7124 definitions */
 #include "ad7124_regs.h" /* We want to use the ad7124_regs array defined in ad7124_regs.h/.c */
 /* USER CODE END Includes */
@@ -74,7 +75,65 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+struct ad7124_st_reg ad7124_regs_config_i[AD7124_REG_NO] = {
+{0x00, 0x00, 1, 2},
+{0x01, 0x0708, 2, 1},
+{0x02, 0x000000, 3, 2},
+{0x03, 0x000000, 3, 1},
+{0x04, 0x0000, 2, 1},
+{0x05, 0x00, 1, 2},
+{0x06, 0x000000, 3, 2},
+{0x07, 0x000044, 3, 1},
+{0x08, 0x00, 1, 2},
+{0x09, 0x8001, 2, 1},
+{0x0A, 0x0001, 2, 1},
+{0x0B, 0x0001, 2, 1},
+{0x0C, 0x0001, 2, 1},
+{0x0D, 0x0001, 2, 1},
+{0x0E, 0x0001, 2, 1},
+{0x0F, 0x0001, 2, 1},
+{0x10, 0x0001, 2, 1},
+{0x11, 0x0001, 2, 1},
+{0x12, 0x0001, 2, 1},
+{0x13, 0x0001, 2, 1},
+{0x14, 0x0001, 2, 1},
+{0x15, 0x0001, 2, 1},
+{0x16, 0x0001, 2, 1},
+{0x17, 0x0001, 2, 1},
+{0x18, 0x0001, 2, 1},
+{0x19, 0x0860, 2, 1},
+{0x1A, 0x0860, 2, 1},
+{0x1B, 0x0860, 2, 1},
+{0x1C, 0x0860, 2, 1},
+{0x1D, 0x0860, 2, 1},
+{0x1E, 0x0860, 2, 1},
+{0x1F, 0x0860, 2, 1},
+{0x20, 0x0860, 2, 1},
+{0x21, 0x060014, 3, 1},
+{0x22, 0x060180, 3, 1},
+{0x23, 0x060180, 3, 1},
+{0x24, 0x060180, 3, 1},
+{0x25, 0x060180, 3, 1},
+{0x26, 0x060180, 3, 1},
+{0x27, 0x060180, 3, 1},
+{0x28, 0x060180, 3, 1},
+{0x29, 0x800000, 3, 1},
+{0x2A, 0x800000, 3, 1},
+{0x2B, 0x800000, 3, 1},
+{0x2C, 0x800000, 3, 1},
+{0x2D, 0x800000, 3, 1},
+{0x2E, 0x800000, 3, 1},
+{0x2F, 0x800000, 3, 1},
+{0x30, 0x800000, 3, 1},
+{0x31, 0x500000, 3, 1},
+{0x32, 0x500000, 3, 1},
+{0x33, 0x500000, 3, 1},
+{0x34, 0x500000, 3, 1},
+{0x35, 0x500000, 3, 1},
+{0x36, 0x500000, 3, 1},
+{0x37, 0x500000, 3, 1},
+{0x38, 0x500000, 3, 1},
+};
 /* USER CODE END 0 */
 
 /**
@@ -114,11 +173,32 @@ int main(void)
   struct ad7124_dev my_ad7124;                    /* A new driver instance */
   struct ad7124_dev *ad7124_handler = &my_ad7124; /* A driver handle to pass around */
   enum ad7124_registers regNr;                       /* Variable to iterate through registers */
-  struct ad7124_init_param initParam;
+
+  struct ad7124_st_reg ad7124_register_map[AD7124_REG_NO];
 
   long timeout = 1000;                               /* Number of tries before a function times out */
   long ret = 0;                                      /* Return value */
   long sample;                                       /* Stores raw value read from the ADC */
+
+  memcpy(ad7124_register_map, ad7124_regs_config_i, sizeof(ad7124_register_map));
+
+  struct	ad7124_init_param initParam =
+    	{
+    		// spi_init_param type
+    		{
+    			2500000, 		// Max SPI Speed
+    			0,				// Chip Select
+  			SPI_MODE_3,		// CPOL = 1, CPHA =1
+  			NULL
+    		},
+    		ad7124_register_map,
+
+    		10000				// Retry count for polling
+    	};
+
+  initParam.spi_init->chip_select = 0;
+  initParam.spi_init->max_speed_hz = 2500000;
+  initParam.spi_init->mode = SPI_MODE_3;
 
   ret = ad7124_setup(&ad7124_handler, &initParam);
   	     if (ret < 0)
