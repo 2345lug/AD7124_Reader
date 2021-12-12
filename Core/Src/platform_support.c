@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "platform_support.h"
 
-
+extern huart1;	//declared in main.c
 /**
   * @brief  Retargets the C library __io_putchar function to the USART.
   * @param  None
@@ -63,7 +63,7 @@ int __io_putchar(int ch)
 {
     /* Implementation of __io_putchar */
 	/* e.g. write a character to the UART1 and Loop until the end of transmission */
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFFFFFF);
+    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFFFFFF);
 
     return ch;
 }
@@ -79,7 +79,7 @@ int __io_getchar(void)
     char rxChar;
 
     // This loops in case of HAL timeout, but if an ok or error occurs, we continue
-    while (HAL_UART_Receive(&huart2, (uint8_t *)&rxChar, 1, 0xFFFFFFFF) == HAL_TIMEOUT);
+    while (HAL_UART_Receive(&huart1, (uint8_t *)&rxChar, 1, 0xFFFFFFFF) == HAL_TIMEOUT);
 
     return rxChar;
 }
@@ -94,7 +94,7 @@ int16_t getchar_nonblocking()
 {
 	uint8_t ch;
 
-	if (HAL_UART_Receive(&huart2, (uint8_t *)&ch, 1, 0x0) == HAL_OK) {
+	if (HAL_UART_Receive(&huart1, (uint8_t *)&ch, 1, 0x0) == HAL_OK) {
 	    return (uint16_t)ch;
 	} else {
 		return (-1); // Indicates no character read
@@ -108,5 +108,5 @@ int16_t getchar_nonblocking()
   * @retval None
   */
 void toggle_activity_led(void){
-	HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+	//HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 }

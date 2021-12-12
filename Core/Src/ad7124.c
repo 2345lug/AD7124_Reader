@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "ad7124.h"
+#include "delay.h"
 
 /* Error codes */
 #define INVALID_VAL -1 /* Invalid argument */
@@ -114,7 +115,7 @@ int32_t ad7124_no_check_read_register(struct ad7124_dev *dev,
 
 	if(check8 != 0) {
 		/* ReadRegister checksum failed. */
-		return COMM_ERR;
+		//return COMM_ERR;
 	}
 
 	/*
@@ -186,6 +187,7 @@ int32_t ad7124_no_check_write_register(struct ad7124_dev *dev,
  * @brief Reads the value of the specified register only when the device is ready
  *        to accept user requests. If the device ready flag is deactivated the
  *        read operation will be executed without checking the device state.
+ *        DEPRECATED, use ad7124_read_register2.
  *
  * @param dev   - The handler of the instance of the driver.
  * @param p_reg - Pointer to the register structure holding info about the
@@ -198,15 +200,37 @@ int32_t ad7124_read_register(struct ad7124_dev *dev,
 			     struct ad7124_st_reg* p_reg)
 {
 	int32_t ret;
+	int32_t tAddr = p_reg->addr;
 
 	if (p_reg->addr != AD7124_ERR_REG && dev->check_ready) {
 		ret = ad7124_wait_for_spi_ready(dev,
 						dev->spi_rdy_poll_cnt);
-		if (ret < 0)
-			return ret;
+		//if (ret < 0)
+		//	return ret;
 	}
 	ret = ad7124_no_check_read_register(dev,
 					    p_reg);
+
+	return ret;
+}
+
+/**
+ * @brief Wrap the read register function to give it a modern signature.
+ * @param [in] dev - Driver handler pointer.
+ * @param [in] reg - Address of the register to be read.
+ * @param [out] readval - Pointer to the register value.
+ * @return SUCCESS in case of success, error code otherwise.
+ */
+int32_t ad7124_read_register2(struct ad7124_dev *dev, uint32_t reg,
+			      uint32_t *readval)
+{
+	int32_t ret;
+
+	ret = ad7124_read_register(dev, &dev->regs[reg]);
+	if (ret != 0)
+		return ret;
+
+	*readval = dev->regs[reg].value;
 
 	return ret;
 }
@@ -215,6 +239,7 @@ int32_t ad7124_read_register(struct ad7124_dev *dev,
  * @brief Writes the value of the specified register only when the device is
  *        ready to accept user requests. If the device ready flag is deactivated
  *        the write operation will be executed without checking the device state.
+ *        DEPRECATED, use ad7124_write_register2.
  *
  * @param dev - The handler of the instance of the driver.
  * @param p_reg - Register structure holding info about the register to be written
@@ -236,6 +261,21 @@ int32_t ad7124_write_register(struct ad7124_dev *dev,
 					     p_reg);
 
 	return ret;
+}
+
+/**
+ * @brief Wrap the write register function to give it a modern signature.
+ * @param [in] dev - Driver handler pointer.
+ * @param [in] reg - Address of the register to be read.
+ * @param [in] writeval - New value for the register.
+ * @return SUCCESS in case of success, error code otherwise.
+ */
+int32_t ad7124_write_register2(struct ad7124_dev *dev, uint32_t reg,
+			       uint32_t writeval)
+{
+	dev->regs[reg].value = writeval;
+
+	return ad7124_write_register(dev, dev->regs[reg]);
 }
 
 /***************************************************************************//**
@@ -402,6 +442,27 @@ int32_t ad7124_read_data(struct ad7124_dev *dev,
 	return ret;
 }
 
+/**
+ * @brief Get the ID of the channel of the latest conversion.
+ *
+ * @param dev     - The handler of the instance of the driver.
+ * @param status  - Pointer to store the read data.
+ *
+ * @return Returns 0 for success or negative error code.
+ */
+int32_t ad7124_get_read_chan_id(struct ad7124_dev *dev, uint32_t *status)
+{
+	int32_t ret;
+	uint32_t reg_temp;
+
+	ret = ad7124_read_register2(dev, AD7124_STATUS_REG, &reg_temp);
+	if (ret != 0)
+		return ret;
+	*status = reg_temp & AD7124_STATUS_REG_CH_ACTIVE(0xF);
+
+	return ret;
+}
+
 /***************************************************************************//**
  * @brief Computes the CRC checksum for a data buffer.
  *
@@ -489,7 +550,7 @@ void ad7124_update_dev_spi_settings(struct ad7124_dev *dev)
  * @return Returns 0 for success or negative error code.
 *******************************************************************************/
 int32_t ad7124_setup(struct ad7124_dev **device,
-		     struct ad7124_init_param init_param)
+		     struct ad7124_init_param *init_param)
 {
 	int32_t ret;
 	enum ad7124_registers reg_nr;
@@ -499,14 +560,14 @@ int32_t ad7124_setup(struct ad7124_dev **device,
 	if (!dev)
 		return INVALID_VAL;
 
-	dev->regs = init_param.regs;
-	dev->spi_rdy_poll_cnt = init_param.spi_rdy_poll_cnt;
-
+	dev->regs = init_param->regs;
+	dev->spi_rdy_poll_cnt = init_param->spi_rdy_poll_cnt;
+	dev->spi_desc = init_param->spi_init;
 	/* Initialize the SPI communication. */
-	ret = spi_init(&dev->spi_desc, &init_param.spi_init);
+	ret = spi_init(&dev->spi_desc, init_param->spi_init);
 	if (ret < 0)
 		return ret;
-
+	*device = dev;
 	/*  Reset the device interface.*/
 	ret = ad7124_reset(dev);
 	if (ret < 0)
@@ -532,6 +593,185 @@ int32_t ad7124_setup(struct ad7124_dev **device,
 	}
 
 	*device = dev;
+
+	return ret;
+}
+
+/**
+ * @brief Get the AD7124 reference clock.
+ * @param [in] dev - Pointer to the application handler.
+ * @param [out] f_clk - Pointer to the clock frequency container.
+ * @return 0 in case of success, error code otherwise.
+ */
+int32_t ad7124_fclk_get(struct ad7124_dev *dev, float *f_clk)
+{
+	int32_t ret;
+	const float	f_clk_fp = 614400,
+			f_clk_mp = 153600,
+			f_clk_lp = 76800;
+	uint32_t reg_temp;
+
+	ret = ad7124_read_register2(dev, AD7124_ADC_Control, &reg_temp);
+	if (ret != 0)
+		return ret;
+
+	switch ((reg_temp & AD7124_ADC_CTRL_REG_POWER_MODE(3)) >> 6) {
+	case 0:
+		*f_clk = f_clk_lp;
+		break;
+	case 1:
+		*f_clk = f_clk_mp;
+		break;
+	case 2:
+	case 3:
+		*f_clk = f_clk_fp;
+		break;
+	default:
+		return ret;
+	}
+
+	return ret;
+}
+
+/**
+ * @brief Get the filter coefficient for the sample rate.
+ * @param [in] dev - Pointer to the application handler.
+ * @param [in] ch_no - Channel number.
+ * @param [out] flt_coff - Pointer to the filter coefficient container.
+ * @return 0 in case of success, error code otherwise.
+ */
+int32_t ad7124_fltcoff_get(struct ad7124_dev *dev, int16_t ch_no,
+			   uint16_t *flt_coff)
+{
+	uint16_t power_mode;
+	int32_t ret;
+	uint32_t reg_temp;
+
+	ret = ad7124_read_register2(dev, AD7124_ADC_Control, &reg_temp);
+	if (ret != 0)
+		return ret;
+
+	power_mode = (reg_temp & AD7124_ADC_CTRL_REG_POWER_MODE(3)) >> 6;
+
+	ret = ad7124_read_register2(dev, (AD7124_Filter_0 + ch_no), &reg_temp);
+	if (ret != 0)
+		return ret;
+
+	*flt_coff = 32;
+	if (reg_temp & AD7124_FILT_REG_SINGLE_CYCLE) {
+		if ((reg_temp & AD7124_FILT_REG_FILTER(7)) ==
+		    AD7124_FILT_REG_FILTER(0))
+			*flt_coff *= 4;
+		if ((reg_temp & AD7124_FILT_REG_FILTER(7)) ==
+		    AD7124_FILT_REG_FILTER(2))
+			*flt_coff *= 3;
+	}
+	if ((reg_temp & AD7124_FILT_REG_FILTER(7)) ==
+	    AD7124_FILT_REG_FILTER(4)) {
+		if (power_mode == 0)
+			*flt_coff *= 11;
+		else
+			*flt_coff *= 19;
+	}
+	if ((reg_temp & AD7124_FILT_REG_FILTER(7)) ==
+	    AD7124_FILT_REG_FILTER(5)) {
+		if (power_mode == 0)
+			*flt_coff *= 10;
+		else
+			*flt_coff *= 18;
+	}
+
+	return ret;
+}
+
+/**
+ * @brief Calculate ODR of the device.
+ * @param [in] dev - Pointer to the application handler.
+ * @param [in] ch_no - Channel number.
+ * @return Output data rate in case of success, negative
+ *         error code otherwise.
+ */
+float ad7124_get_odr(struct ad7124_dev *dev, int16_t ch_no)
+{
+	float f_clk;
+	uint16_t fs_value, flt_coff;
+	int32_t ret;
+	uint32_t reg_temp;
+
+	ret = ad7124_fclk_get(dev, &f_clk);
+	if (ret != 0)
+		return ret;
+
+	ret = ad7124_read_register2(dev, (AD7124_Filter_0 + ch_no),
+				    &reg_temp);
+	if (ret != 0)
+		return ret;
+
+	fs_value = reg_temp & AD7124_FILT_REG_FS(0x7FF);
+
+	if ((reg_temp & AD7124_FILT_REG_FILTER(7)) ==
+	    AD7124_FILT_REG_FILTER(7)) {
+		switch ((reg_temp & AD7124_FILT_REG_POST_FILTER(7)) >> 17) {
+		case 2:
+			return 27.27;
+		case 3:
+			return 25;
+		case 5:
+			return 20;
+		case 6:
+			return 16.7;
+		default:
+			return -1;
+		}
+	}
+
+	ret = ad7124_fltcoff_get(dev, ch_no, &flt_coff);
+	if (ret != 0)
+		return ret;
+
+	return (f_clk / (float)(flt_coff * fs_value));
+}
+
+/**
+ * @brief Set ODR of the device.
+ * @param [in] dev - Pointer to the application handler.
+ * @param [in] odr - New ODR of the device.
+ * @param [in] ch_no - Channel number.
+ * @return 0 in case of success, error code otherwise.
+ */
+int32_t ad7124_set_odr(struct ad7124_dev *dev, float odr,
+		       int16_t ch_no)
+{
+	float f_clk;
+	uint16_t flt_coff, fs_value;
+	int32_t ret;
+	uint32_t reg_temp;
+
+	ret = ad7124_fclk_get(dev, &f_clk);
+	if (ret != 0)
+		return ret;
+
+	ret = ad7124_fltcoff_get(dev, ch_no, &flt_coff);
+	if (ret != 0)
+		return ret;
+
+	fs_value = (uint16_t)(f_clk / (flt_coff * odr));
+	if (fs_value == 0)
+		fs_value = 1;
+	if (fs_value > 2047)
+		fs_value = 2047;
+
+	ret = ad7124_read_register2(dev, (AD7124_Filter_0 + ch_no),
+				    &reg_temp);
+	if (ret != 0)
+		return ret;
+	reg_temp &= ~AD7124_FILT_REG_FS(0x7FF);
+	reg_temp |= AD7124_FILT_REG_FS(fs_value);
+
+	ret = ad7124_write_register2(dev, (AD7124_Filter_0 + ch_no),
+				     reg_temp);
+	if (ret != 0)
+		return ret;
 
 	return ret;
 }

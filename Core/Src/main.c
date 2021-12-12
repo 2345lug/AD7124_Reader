@@ -27,8 +27,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "AD7124.h"      /* AD7124 definitions */
-#include "AD7124_regs.h" /* We want to use the ad7124_regs array defined in ad7124_regs.h/.c */
+#include <string.h>
+#include "ad7124.h"      /* AD7124 definitions */
+#include "ad7124_regs.h" /* We want to use the ad7124_regs array defined in ad7124_regs.h/.c */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +57,8 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+uint8_t csPort = CS1_GPIO_Port;
+uint8_t csPin = CS1_Pin;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,7 +75,65 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+struct ad7124_st_reg ad7124_regs_config_i[AD7124_REG_NO] = {
+{0x00, 0x00, 1, 2},
+{0x01, 0x0708, 2, 1},
+{0x02, 0x000000, 3, 2},
+{0x03, 0x000000, 3, 1},
+{0x04, 0x0000, 2, 1},
+{0x05, 0x00, 1, 2},
+{0x06, 0x000000, 3, 2},
+{0x07, 0x000044, 3, 1},
+{0x08, 0x00, 1, 2},
+{0x09, 0x8001, 2, 1},
+{0x0A, 0x0001, 2, 1},
+{0x0B, 0x0001, 2, 1},
+{0x0C, 0x0001, 2, 1},
+{0x0D, 0x0001, 2, 1},
+{0x0E, 0x0001, 2, 1},
+{0x0F, 0x0001, 2, 1},
+{0x10, 0x0001, 2, 1},
+{0x11, 0x0001, 2, 1},
+{0x12, 0x0001, 2, 1},
+{0x13, 0x0001, 2, 1},
+{0x14, 0x0001, 2, 1},
+{0x15, 0x0001, 2, 1},
+{0x16, 0x0001, 2, 1},
+{0x17, 0x0001, 2, 1},
+{0x18, 0x0001, 2, 1},
+{0x19, 0x0860, 2, 1},
+{0x1A, 0x0860, 2, 1},
+{0x1B, 0x0860, 2, 1},
+{0x1C, 0x0860, 2, 1},
+{0x1D, 0x0860, 2, 1},
+{0x1E, 0x0860, 2, 1},
+{0x1F, 0x0860, 2, 1},
+{0x20, 0x0860, 2, 1},
+{0x21, 0x060014, 3, 1},
+{0x22, 0x060180, 3, 1},
+{0x23, 0x060180, 3, 1},
+{0x24, 0x060180, 3, 1},
+{0x25, 0x060180, 3, 1},
+{0x26, 0x060180, 3, 1},
+{0x27, 0x060180, 3, 1},
+{0x28, 0x060180, 3, 1},
+{0x29, 0x800000, 3, 1},
+{0x2A, 0x800000, 3, 1},
+{0x2B, 0x800000, 3, 1},
+{0x2C, 0x800000, 3, 1},
+{0x2D, 0x800000, 3, 1},
+{0x2E, 0x800000, 3, 1},
+{0x2F, 0x800000, 3, 1},
+{0x30, 0x800000, 3, 1},
+{0x31, 0x500000, 3, 1},
+{0x32, 0x500000, 3, 1},
+{0x33, 0x500000, 3, 1},
+{0x34, 0x500000, 3, 1},
+{0x35, 0x500000, 3, 1},
+{0x36, 0x500000, 3, 1},
+{0x37, 0x500000, 3, 1},
+{0x38, 0x500000, 3, 1},
+};
 /* USER CODE END 0 */
 
 /**
@@ -110,6 +170,46 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  struct ad7124_dev my_ad7124;                    /* A new driver instance */
+  struct ad7124_dev *ad7124_handler = &my_ad7124; /* A driver handle to pass around */
+  enum ad7124_registers regNr;                       /* Variable to iterate through registers */
+
+  struct ad7124_st_reg ad7124_register_map[AD7124_REG_NO];
+
+  long timeout = 1000;                               /* Number of tries before a function times out */
+  long ret = 0;                                      /* Return value */
+  long sample;                                       /* Stores raw value read from the ADC */
+  spi_init_param spiInit;
+  spiInit.chip_select = 0;
+  spiInit.max_speed_hz = 2500000;
+  spiInit.mode = SPI_MODE_3;
+
+  memcpy(ad7124_register_map, ad7124_regs_config_i, sizeof(ad7124_register_map));
+
+  struct	ad7124_init_param initParam =
+    	{
+    		// spi_init_param type
+    		&spiInit,
+    		ad7124_register_map,
+
+    		10000				// Retry count for polling
+    	};
+
+  ret = ad7124_setup(&ad7124_handler, &initParam);
+  	     if (ret < 0)
+  	     {
+  	         /* AD7124 initialization failed, check the value of ret! */
+  	     }
+  	     else
+  	     {
+  	         /* AD7124 initialization OK */
+  	     }
+
+  	     /* Read all registers */
+  	     for (regNr = AD7124_Status; (regNr < AD7124_REG_NO) && !(ret < 0); regNr++)
+  	     {
+  	         ret = ad7124_read_register(ad7124_handler, &ad7124_regs[regNr]);
+  	     }
 
   /* USER CODE END 2 */
 
@@ -118,8 +218,24 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  /* Initialize AD7124 device. */
+
 
     /* USER CODE BEGIN 3 */
+  HAL_GPIO_WritePin(AD_SYNC_GPIO_Port, AD_SYNC_Pin, GPIO_PIN_SET);
+  /* Read data from the ADC */
+  ret = ad7124_wait_for_conv_ready(ad7124_handler, timeout);
+  if (ret < 0)
+  {
+	  	 	/* Something went wrong, check the value of ret! */
+  }
+  ret = ad7124_read_register(ad7124_handler, &ad7124_regs[AD7124_Data]);
+  ret = ad7124_read_data(ad7124_handler, &sample);
+  if (ret < 0)
+  {
+    /* Something went wrong, check the value of ret! */
+  }
+  HAL_GPIO_WritePin(AD_SYNC_GPIO_Port, AD_SYNC_Pin, GPIO_PIN_RESET);
   }
   /* USER CODE END 3 */
 }
@@ -307,20 +423,20 @@ static void MX_SPI1_Init(void)
 
   /* USER CODE END SPI1_Init 1 */
   /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 7;
-  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+	hspi1.Instance = SPI1;
+	  hspi1.Init.Mode = SPI_MODE_MASTER;
+	  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+	  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+	  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+	  hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+	  hspi1.Init.NSS = SPI_NSS_SOFT;
+	  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+	  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+	  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+	  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+	  hspi1.Init.CRCPolynomial = 7;
+	  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+	  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
   if (HAL_SPI_Init(&hspi1) != HAL_OK)
   {
     Error_Handler();
@@ -497,18 +613,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void ADC_INIT(){
-    /* Initialize AD7124 device. */
-    ret = AD7124_Setup(ad7124_handler, AD7124_SLAVE_ID, (ad7124_st_reg *)&ad7124_regs);
-    if (ret < 0)
-    {
-        /* AD7124 initialisation failed, check the value of ret! */
-    }
-    else
-    {
-        /* AD7124 initialization OK */
-    }
-}
+
 /* USER CODE END 4 */
 
 /**
