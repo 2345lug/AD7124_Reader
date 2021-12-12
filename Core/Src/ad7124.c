@@ -115,7 +115,7 @@ int32_t ad7124_no_check_read_register(struct ad7124_dev *dev,
 
 	if(check8 != 0) {
 		/* ReadRegister checksum failed. */
-		return COMM_ERR;
+		//return COMM_ERR;
 	}
 
 	/*
@@ -200,12 +200,13 @@ int32_t ad7124_read_register(struct ad7124_dev *dev,
 			     struct ad7124_st_reg* p_reg)
 {
 	int32_t ret;
+	int32_t tAddr = p_reg->addr;
 
 	if (p_reg->addr != AD7124_ERR_REG && dev->check_ready) {
 		ret = ad7124_wait_for_spi_ready(dev,
 						dev->spi_rdy_poll_cnt);
-		if (ret < 0)
-			return ret;
+		//if (ret < 0)
+		//	return ret;
 	}
 	ret = ad7124_no_check_read_register(dev,
 					    p_reg);
@@ -561,12 +562,12 @@ int32_t ad7124_setup(struct ad7124_dev **device,
 
 	dev->regs = init_param->regs;
 	dev->spi_rdy_poll_cnt = init_param->spi_rdy_poll_cnt;
-
+	dev->spi_desc = init_param->spi_init;
 	/* Initialize the SPI communication. */
 	ret = spi_init(&dev->spi_desc, init_param->spi_init);
 	if (ret < 0)
 		return ret;
-
+	*device = dev;
 	/*  Reset the device interface.*/
 	ret = ad7124_reset(dev);
 	if (ret < 0)

@@ -179,26 +179,21 @@ int main(void)
   long timeout = 1000;                               /* Number of tries before a function times out */
   long ret = 0;                                      /* Return value */
   long sample;                                       /* Stores raw value read from the ADC */
+  spi_init_param spiInit;
+  spiInit.chip_select = 0;
+  spiInit.max_speed_hz = 2500000;
+  spiInit.mode = SPI_MODE_3;
 
   memcpy(ad7124_register_map, ad7124_regs_config_i, sizeof(ad7124_register_map));
 
   struct	ad7124_init_param initParam =
     	{
     		// spi_init_param type
-    		{
-    			2500000, 		// Max SPI Speed
-    			0,				// Chip Select
-  			SPI_MODE_3,		// CPOL = 1, CPHA =1
-  			NULL
-    		},
+    		&spiInit,
     		ad7124_register_map,
 
     		10000				// Retry count for polling
     	};
-
-  initParam.spi_init->chip_select = 0;
-  initParam.spi_init->max_speed_hz = 2500000;
-  initParam.spi_init->mode = SPI_MODE_3;
 
   ret = ad7124_setup(&ad7124_handler, &initParam);
   	     if (ret < 0)
@@ -223,8 +218,24 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  /* Initialize AD7124 device. */
+
 
     /* USER CODE BEGIN 3 */
+  HAL_GPIO_WritePin(AD_SYNC_GPIO_Port, AD_SYNC_Pin, GPIO_PIN_SET);
+  /* Read data from the ADC */
+  ret = ad7124_wait_for_conv_ready(ad7124_handler, timeout);
+  if (ret < 0)
+  {
+	  	 	/* Something went wrong, check the value of ret! */
+  }
+  ret = ad7124_read_register(ad7124_handler, &ad7124_regs[AD7124_Data]);
+  ret = ad7124_read_data(ad7124_handler, &sample);
+  if (ret < 0)
+  {
+    /* Something went wrong, check the value of ret! */
+  }
+  HAL_GPIO_WritePin(AD_SYNC_GPIO_Port, AD_SYNC_Pin, GPIO_PIN_RESET);
   }
   /* USER CODE END 3 */
 }
@@ -412,20 +423,20 @@ static void MX_SPI1_Init(void)
 
   /* USER CODE END SPI1_Init 1 */
   /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
-  hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 7;
-  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+	hspi1.Instance = SPI1;
+	  hspi1.Init.Mode = SPI_MODE_MASTER;
+	  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+	  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+	  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+	  hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+	  hspi1.Init.NSS = SPI_NSS_SOFT;
+	  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+	  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+	  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+	  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+	  hspi1.Init.CRCPolynomial = 7;
+	  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+	  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
   if (HAL_SPI_Init(&hspi1) != HAL_OK)
   {
     Error_Handler();
