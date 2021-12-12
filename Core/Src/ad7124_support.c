@@ -1,9 +1,8 @@
 /*!
  *****************************************************************************
-  @file:  platform_support.c
+  @file:  ad7124_support.c
 
-  @brief: support functions and definitions for STM32 in general, and
-           targeting a configuration of L476 device in particular
+  @brief: Provides useful support functions for the AD7124 NoOS driver
 
   @details:
  -----------------------------------------------------------------------------
@@ -47,66 +46,88 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *****************************************************************************/
 
-// Include Files
-#include <math.h>
-#include <string.h>
+#include <stdbool.h>
+#include "ad7124_support.h"
 
-#include "platform_support.h"
-
-
-/**
-  * @brief  Retargets the C library __io_putchar function to the USART.
-  * @param  None
-  * @retval None
-  */
-int __io_putchar(int ch)
+// Public Functions
+/*
+ * @brief helper function get the setup setting for an ADC channel
+ *
+ * @param dev The device structure.
+ *
+ * @param channel ADC channel to get Setup for.
+ *
+ * @return value of setup field in channel configuration.
+ */
+uint8_t ad7124_get_channel_setup(struct ad7124_dev *dev, uint8_t channel)
 {
-    /* Implementation of __io_putchar */
-	/* e.g. write a character to the UART1 and Loop until the end of transmission */
-    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFFFFFF);
-
-    return ch;
-}
-
-/**
-  * @brief  Retargets the C library __io_getchar function to the USART.
-  * @param  None
-  * @retval character read uart
-  */
-int __io_getchar(void)
-{
-  /* Implementation of __io_getchar */
-    char rxChar;
-
-    // This loops in case of HAL timeout, but if an ok or error occurs, we continue
-    while (HAL_UART_Receive(&huart1, (uint8_t *)&rxChar, 1, 0xFFFFFFFF) == HAL_TIMEOUT);
-
-    return rxChar;
+	return (dev->regs[AD7124_Channel_0 + channel].value >> 12) & 0x7;
 }
 
 
-/**
-  * @brief  getchar, but does not block if nothing waiting to be read
-  * @param  None
-  * @retval character if available, -1 otherwise
-  */
-int16_t getchar_nonblocking()
+/*
+ * @brief helper function get the PGA setting for an ADC channel
+ *
+ * @param dev The device structure.
+ *
+ * @param channel ADC channel to get Setup for.
+ *
+ * @return value of PGA field in the setup for an ADC channel.
+ */
+uint8_t ad7124_get_channel_pga(struct ad7124_dev *dev, uint8_t channel)
 {
-	uint8_t ch;
+	uint8_t setup = ad7124_get_channel_setup(dev, channel);
 
-	if (HAL_UART_Receive(&huart1, (uint8_t *)&ch, 1, 0x0) == HAL_OK) {
-	    return (uint16_t)ch;
+	return (dev->regs[AD7124_Config_0 + setup].value) & 0x07;
+}
+
+
+/*
+ * @brief helper function get the bipolar setting for an ADC channel
+ *
+ * @param dev The device structure.
+ *
+ * @param channel ADC channel to get bipolar mode for.
+ *
+ * @return value of bipolar field in the setup for an ADC channel.
+ */
+bool ad7124_get_channel_bipolar(struct ad7124_dev *dev, uint8_t channel)
+{
+	uint8_t setup = ad7124_get_channel_setup(dev, channel);
+
+	return ((dev->regs[AD7124_Config_0 + setup].value >> 11) & 0x1) ? true : false;
+}
+
+
+/*
+ * @brief converts ADC sample value to voltage based on gain setting
+ *
+ * @param dev The device structure.
+ *
+ * @param channel ADC channel to get Setup for.
+ *
+ * @param sample Raw ADC sample
+ *
+ * @return Sample ADC value converted to voltage.
+ *
+ * @note The conversion equation is implemented for simplicity,
+ *       not for accuracy or performance
+ *
+ */
+float ad7124_convert_sample_to_voltage(struct ad7124_dev *dev, uint8_t channel, uint32_t sample)
+{
+	bool isBipolar = ad7124_get_channel_bipolar(dev, channel);
+	uint8_t channelPGA = ad7124_get_channel_pga(dev, channel);
+
+	float convertedValue;
+
+	if (isBipolar) {
+        convertedValue = ( ((float)sample / (1 << (AD7124_ADC_N_BITS -1))) -1 ) * \
+        		              (AD7124_REF_VOLTAGE / AD7124_PGA_GAIN(channelPGA));
 	} else {
-		return (-1); // Indicates no character read
+		convertedValue = ((float)sample * AD7124_REF_VOLTAGE)/(AD7124_PGA_GAIN(channelPGA) * \
+								                              (1 << AD7124_ADC_N_BITS));
 	}
-}
 
-
-/**
-  * @brief  toggles an LED to show something has happened
-  * @param  None
-  * @retval None
-  */
-void toggle_activity_led(void){
-	//HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    return (convertedValue);
 }

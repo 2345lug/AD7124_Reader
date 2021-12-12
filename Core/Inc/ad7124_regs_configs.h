@@ -1,13 +1,14 @@
 /*!
  *****************************************************************************
-  @file:  platform_support.c
+  @file:  ad7124_reg_app_config.h
 
-  @brief: support functions and definitions for STM32 in general, and
-           targeting a configuration of L476 device in particular
+  @brief: 
 
   @details:
  -----------------------------------------------------------------------------
-Copyright (c) 2019 Analog Devices, Inc.  All rights reserved.
+Copyright (c) 2018-19 Analog Devices, Inc.
+
+All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -47,66 +48,16 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *****************************************************************************/
 
-// Include Files
-#include <math.h>
-#include <string.h>
+#ifndef AD7124_REGS_CONFIGS_H_
+#define AD7124_REGS_CONFIGS_H_
 
-#include "platform_support.h"
+#include "ad7124.h"
 
+/*
+ * Arrays holding the info for the AD7124 registers - address, initial value,
+ * size and access type.
+ */
+extern struct ad7124_st_reg ad7124_regs_config_a[AD7124_REG_NO];
+extern struct ad7124_st_reg ad7124_regs_config_b[AD7124_REG_NO];
 
-/**
-  * @brief  Retargets the C library __io_putchar function to the USART.
-  * @param  None
-  * @retval None
-  */
-int __io_putchar(int ch)
-{
-    /* Implementation of __io_putchar */
-	/* e.g. write a character to the UART1 and Loop until the end of transmission */
-    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFFFFFF);
-
-    return ch;
-}
-
-/**
-  * @brief  Retargets the C library __io_getchar function to the USART.
-  * @param  None
-  * @retval character read uart
-  */
-int __io_getchar(void)
-{
-  /* Implementation of __io_getchar */
-    char rxChar;
-
-    // This loops in case of HAL timeout, but if an ok or error occurs, we continue
-    while (HAL_UART_Receive(&huart1, (uint8_t *)&rxChar, 1, 0xFFFFFFFF) == HAL_TIMEOUT);
-
-    return rxChar;
-}
-
-
-/**
-  * @brief  getchar, but does not block if nothing waiting to be read
-  * @param  None
-  * @retval character if available, -1 otherwise
-  */
-int16_t getchar_nonblocking()
-{
-	uint8_t ch;
-
-	if (HAL_UART_Receive(&huart1, (uint8_t *)&ch, 1, 0x0) == HAL_OK) {
-	    return (uint16_t)ch;
-	} else {
-		return (-1); // Indicates no character read
-	}
-}
-
-
-/**
-  * @brief  toggles an LED to show something has happened
-  * @param  None
-  * @retval None
-  */
-void toggle_activity_led(void){
-	//HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-}
+#endif /* AD7124_REGS_CONFIGS_H_ */

@@ -93,7 +93,4 @@ int32_t spi_write_and_read(struct spi_desc *desc,
 			   uint8_t *data,
 			   uint8_t bytes_number);
 
-#define SPI1_NSS_GPIO_Port GPIOA
-#define SPI1_NSS_Pin 5 //GPIO port and
-
 #endif // SPI_H_

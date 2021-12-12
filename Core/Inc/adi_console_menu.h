@@ -1,9 +1,8 @@
 /*!
  *****************************************************************************
-  @file:  platform_support.c
+  @file:  adi_console_menu.h
 
-  @brief: support functions and definitions for STM32 in general, and
-           targeting a configuration of L476 device in particular
+  @brief:	A simple console menu manager handler
 
   @details:
  -----------------------------------------------------------------------------
@@ -47,66 +46,49 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *****************************************************************************/
 
-// Include Files
-#include <math.h>
-#include <string.h>
+#ifndef ADI_CONSOLE_MENU_H_
+#define ADI_CONSOLE_MENU_H_
 
-#include "platform_support.h"
+#include <stdbool.h>
+#include <stdint.h>
 
+#define MENU_ESCAPED			-1
+#define MENU_CONTINUE           0
+#define MENU_DONE               1
 
-/**
-  * @brief  Retargets the C library __io_putchar function to the USART.
-  * @param  None
-  * @retval None
-  */
-int __io_putchar(int ch)
-{
-    /* Implementation of __io_putchar */
-	/* e.g. write a character to the UART1 and Loop until the end of transmission */
-    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFFFFFF);
+#define ESCAPE_KEY_CODE			(char)0x1B
 
-    return ch;
-}
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) ((sizeof (x)) / (sizeof ((x)[0])))
+#endif
 
-/**
-  * @brief  Retargets the C library __io_getchar function to the USART.
-  * @param  None
-  * @retval character read uart
-  */
-int __io_getchar(void)
-{
-  /* Implementation of __io_getchar */
-    char rxChar;
+/* Type Definitions */
+// Each menu item is defined by this struct
+typedef struct {
+	// String displayed for menu item
+	char * displayText;
+	// character that can be pressed to select menu item
+	char  shortcutKey;
+	// Function to be called when menu item is selected, if NULL, no function is called
+	int32_t (*menuAction)(void);
+} console_menu_item;
 
-    // This loops in case of HAL timeout, but if an ok or error occurs, we continue
-    while (HAL_UART_Receive(&huart1, (uint8_t *)&rxChar, 1, 0xFFFFFFFF) == HAL_TIMEOUT);
+// This defines a complete menu with items
+typedef struct{
+	// String to be displayed as the menu title
+	char * title;
+	// Array of all the menu items
+	console_menu_item * items;
+	// Number of menuItems
+	uint8_t itemCount;
+	// Should the escape key to exit the menu be enabled?
+	bool enableEscapeKey;
+} console_menu;
 
-    return rxChar;
-}
+/* Function Declarations */
+/* Display a console menu, and handle user interactions */
+int32_t adi_do_console_menu(const console_menu * menu);
+void adi_clear_console(void);
+void adi_press_any_key_to_continue(void);
 
-
-/**
-  * @brief  getchar, but does not block if nothing waiting to be read
-  * @param  None
-  * @retval character if available, -1 otherwise
-  */
-int16_t getchar_nonblocking()
-{
-	uint8_t ch;
-
-	if (HAL_UART_Receive(&huart1, (uint8_t *)&ch, 1, 0x0) == HAL_OK) {
-	    return (uint16_t)ch;
-	} else {
-		return (-1); // Indicates no character read
-	}
-}
-
-
-/**
-  * @brief  toggles an LED to show something has happened
-  * @param  None
-  * @retval None
-  */
-void toggle_activity_led(void){
-	//HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-}
+#endif /* ADI_CONSOLE_MENU_H_ */
