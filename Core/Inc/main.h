@@ -58,7 +58,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define AD7124_SLAVE_ID 0x01
 #define SD_CS_Pin GPIO_PIN_2
 #define SD_CS_GPIO_Port GPIOA
 #define BUTTON_Pin GPIO_PIN_5
