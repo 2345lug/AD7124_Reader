@@ -251,11 +251,13 @@ static void clear_channel_samples(void)
  *            and assigned to the channel they come from. Escape key an be used
  *            to exit the loop
  */
-static int32_t do_continuous_conversion(uint8_t display_mode)
+int32_t do_continuous_conversion(uint8_t display_mode)
 {
 	int32_t error_code;
 	int32_t sample_data;
-
+	static uint32_t initialized = 0;
+	if (initialized == 0)
+	{
 	// Clear the ADC CTRL MODE bits, has the effect of selecting continuous mode
     ad7124_register_map[AD7124_ADC_Control].value &= ~(AD7124_ADC_CTRL_REG_MODE(0xf));
 	if ( (error_code = ad7124_write_register(pAd7124_dev, ad7124_register_map[AD7124_ADC_Control]) ) < 0) {
@@ -289,10 +291,10 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
 		}
 		printf("\r\n");
 	}
-
+	initialized = 1;
+	}
 	// Continuously read the channels, and store sample values
-    while (was_escape_key_pressed() != true) {
-    	toggle_activity_led();
+       	toggle_activity_led();
 
     	if (display_mode == DISPLAY_DATA_TABULAR) {
     		adi_clear_console();
@@ -310,16 +312,19 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
 
     	if ( (error_code = ad7124_wait_for_conv_ready(pAd7124_dev, 10000)) < 0) {
     		printf("Error/Timeout waiting for conversion ready %ld\r\n", error_code);
-    		continue;
+    		//continue;
     	}
 
     	if ( (error_code = ad7124_read_data(pAd7124_dev, &sample_data)) < 0) {
 			printf("Error reading ADC Data (%ld).\r\n", error_code);
-			continue;
+			//continue;
 		}
 
 		/*
 		 * No error, need to process the sample, what channel has been read? update that channelSample
+		 for (uint8_t i = 0; i < AD7124_CHANNEL_COUNT; i++) {
+			channel_read = ad7124_register_map[AD7124_Status].value & 0x0000000F;
+		}
 		 */
 		uint8_t channel_read = ad7124_register_map[AD7124_Status].value & 0x0000000F;
 
@@ -329,10 +334,12 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
 		} else {
 			printf("Channel Read was %d, which is not < AD7124_CHANNEL_COUNT\r\n", channel_read);
 		}
-
+		float convertedSample = 0;
+		convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
 		dislay_channel_samples(SHOW_ENABLED_CHANNELS, display_mode);
-    }
 
+
+	/*
     // All done, ADC put into standby mode
     ad7124_register_map[AD7124_ADC_Control].value &= ~(AD7124_ADC_CTRL_REG_MODE(0xf));
     // 2 = sleep/standby mode
@@ -342,7 +349,7 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
 		printf("Error (%ld) setting AD7124 ADC into standby mode.\r\n", error_code);
 		adi_press_any_key_to_continue();
 	}
-
+	*/
 	return(MENU_CONTINUE);
 }
 
@@ -388,7 +395,7 @@ static int32_t menu_continuous_conversion_stream(void)
  *             single conversion run again, until no channels are enabled.
  *             The original enable state of each channel is then restored.
  */
-static int32_t menu_single_conversion(void)
+int32_t menu_single_conversion(void)
 {
 	int32_t    error_code;
 	uint16_t   channel_enable_mask = 0;
@@ -501,7 +508,7 @@ static int32_t menu_read_status(void)
  *
  * @details
  */
-static int32_t menu_read_id(void)
+int32_t menu_read_id(void)
 {
 	if (ad7124_read_register(pAd7124_dev, &ad7124_register_map[AD7124_ID]) < 0) {
 	   printf("\r\nError Encountered reading ID register\r\n");

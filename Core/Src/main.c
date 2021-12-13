@@ -113,10 +113,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
   /* Initialize the AD7124 application before the main loop */
 	int32_t setupResult;
+	uint8_t eCnt = 0;
 	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A)) < 0 ) {
-		// Handle error setting up AD7124 here
-	}
 
+	}
+	eCnt++;
+	printf("Greetings!");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -124,8 +126,10 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  //adi_do_console_menu(&ad7124_main_menu);
-	  menu_read_id();
+	 //adi_do_console_menu(&ad7124_main_menu);
+	  //menu_read_id();
+	 // menu_single_conversion();
+	do_continuous_conversion(1);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
