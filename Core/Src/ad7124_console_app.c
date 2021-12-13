@@ -262,14 +262,14 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 {
 	int32_t error_code;
 	int32_t sample_data;
-	static uint32_t initialized = 0;
-	if (initialized == 0)
+	static uint32_t initialized[10] = { 0 };
+	if (initialized[startPoint] == 0)
 	{
 	// Clear the ADC CTRL MODE bits, has the effect of selecting continuous mode
     ad7124_register_map[AD7124_ADC_Control].value &= ~(AD7124_ADC_CTRL_REG_MODE(0xf));
 	if ( (error_code = ad7124_write_register(pAd7124_dev, ad7124_register_map[AD7124_ADC_Control]) ) < 0) {
 		printf("Error (%ld) setting AD7124 Continuous conversion mode.\r\n", error_code);
-		adi_press_any_key_to_continue();
+		//adi_press_any_key_to_continue();
 		return(MENU_CONTINUE);
 	}
 
@@ -298,7 +298,7 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 		}
 		printf("\r\n");
 	}
-	initialized = 1;
+	initialized[startPoint] = 1;
 	}
 	// Continuously read the channels, and store sample values
        	toggle_activity_led();
