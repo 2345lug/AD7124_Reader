@@ -58,6 +58,11 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 uint8_t csPort = CS1_GPIO_Port;
 uint8_t csPin = CS1_Pin;
+
+struct ad7124_dev * pAd7124_dev1 = NULL;
+struct ad7124_dev * pAd7124_dev2 = NULL;
+struct ad7124_dev * pAd7124_dev3 = NULL;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -114,7 +119,11 @@ int main(void)
   /* Initialize the AD7124 application before the main loop */
 	int32_t setupResult;
 	uint8_t eCnt = 0;
-	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A)) < 0 ) {
+	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, pAd7124_dev1)) < 0 ) {
+
+	}
+	else
+	{
 
 	}
 	eCnt++;
@@ -129,7 +138,7 @@ int main(void)
 	 //adi_do_console_menu(&ad7124_main_menu);
 	  //menu_read_id();
 	 // menu_single_conversion();
-	do_continuous_conversion(1);
+	do_continuous_conversion(1, pAd7124_dev1);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
