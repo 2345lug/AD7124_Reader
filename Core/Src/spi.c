@@ -59,7 +59,8 @@
 /******************************************************************************/
 /************************ Variable Declarations *******************************/
 /******************************************************************************/
-
+extern csPort;
+extern csPin;
 static uint8_t spi_rx_buffer[SPI_BUFFER_SIZE] = {0};
 
 /******************************************************************************/
@@ -120,11 +121,11 @@ int32_t spi_write_and_read(struct spi_desc *desc,
 	 * Chip select but this uses software to make it more
 	 * general, and flexible with pin choice.
 	 */
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(csPort, csPin, GPIO_PIN_RESET);
     if (HAL_SPI_TransmitReceive(&hspi1, data, (uint8_t *)spi_rx_buffer, bytes_number, 5000) != HAL_OK) {
 	    return FAILURE;
 	}
-    HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(csPort, csPin, GPIO_PIN_SET);
 
 	/* Copy the SPI receive buffer to the supplied data buffer to return to caller*/
     memcpy(data, spi_rx_buffer, bytes_number);

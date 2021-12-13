@@ -56,7 +56,7 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-uint8_t csPort = CS1_GPIO_Port;
+GPIO_TypeDef* csPort = CS1_GPIO_Port;
 uint8_t csPin = CS1_Pin;
 
 struct ad7124_dev * pAd7124_dev1 = NULL;
@@ -118,14 +118,15 @@ int main(void)
   /* USER CODE BEGIN 2 */
   /* Initialize the AD7124 application before the main loop */
 	int32_t setupResult;
+	uint32_t resultPointer;
 	uint8_t eCnt = 0;
 
-	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, pAd7124_dev1, (uint8_t)CS1_GPIO_Port, (uint8_t)CS1_Pin)) < 0 ) {
+	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev1, (uint8_t)CS1_GPIO_Port, (uint8_t)CS1_Pin, &resultPointer )) < 0 ) {
 
 	}
 	else
 	{
-
+		pAd7124_dev1 = resultPointer;
 	}
 	eCnt++;
 	printf("Greetings!");

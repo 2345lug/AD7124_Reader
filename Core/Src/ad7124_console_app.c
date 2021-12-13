@@ -97,7 +97,7 @@ static uint32_t channel_samples_count[AD7124_CHANNEL_COUNT] = {0};
  *  		   the device.  A call to init the SPI port is made, but may not
  *  		   actually do very much, depending on the platform
  */
-int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev, uint8_t inPort, uint8_t inPin)
+int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev, uint8_t inPort, uint8_t inPin, uint32_t* pointerOutput)
 {
 	/*
 	 * Copy one of the default/user configs to the live register memory map
@@ -137,11 +137,10 @@ int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev,
   	};
 
   int32_t setupResult = ad7124_setup(&pAd7124_dev, sAd7124_init);
-  if (setupResult == 0)
-  {
-    (pAd7124_dev)->initialized = 1;
-  }
+  *pointerOutput = (pAd7124_dev);
   return(setupResult);
+
+
 
 }
 
@@ -344,6 +343,7 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 		}
 		float convertedSample = 0;
 		convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
+		convertedSample = convertedSample;
 		//dislay_channel_samples(SHOW_ENABLED_CHANNELS, display_mode);
 
 
