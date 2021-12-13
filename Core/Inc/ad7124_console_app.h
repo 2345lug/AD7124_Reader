@@ -57,7 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Public Declarations */
 int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev, uint8_t inPort, uint8_t inPin, uint32_t* pointerOutput);
-int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd7124_dev);
+int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd7124_dev, float* resultArrayPointer, uint8_t startPoint);
 extern console_menu ad7124_main_menu;
 
 

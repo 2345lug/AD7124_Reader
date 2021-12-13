@@ -58,7 +58,7 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 GPIO_TypeDef* csPort = CS1_GPIO_Port;
 uint8_t csPin = CS1_Pin;
-
+float convertedVoltage[10] = { 0 };
 struct ad7124_dev * pAd7124_dev1 = NULL;
 struct ad7124_dev * pAd7124_dev2 = NULL;
 struct ad7124_dev * pAd7124_dev3 = NULL;
@@ -121,12 +121,31 @@ int main(void)
 	uint32_t resultPointer;
 	uint8_t eCnt = 0;
 
+	csPort = CS1_GPIO_Port;
+	csPin = CS1_Pin;
 	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev1, (uint8_t)CS1_GPIO_Port, (uint8_t)CS1_Pin, &resultPointer )) < 0 ) {
-
 	}
 	else
 	{
 		pAd7124_dev1 = resultPointer;
+	}
+	eCnt++;
+	csPort = CS2_GPIO_Port;
+	csPin = CS2_Pin;
+		if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev2, (uint8_t)CS2_GPIO_Port, (uint8_t)CS2_Pin, &resultPointer )) < 0 ) {
+		}
+		else
+		{
+			pAd7124_dev2 = resultPointer;
+		}
+		eCnt++;
+	csPort = CS3_GPIO_Port;
+	csPin = CS3_Pin;
+	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev3, (uint8_t)CS3_GPIO_Port, (uint8_t)CS3_Pin, &resultPointer )) < 0 ) {
+	}
+	else
+	{
+		pAd7124_dev2 = resultPointer;
 	}
 	eCnt++;
 	printf("Greetings!");
@@ -136,11 +155,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-	 //adi_do_console_menu(&ad7124_main_menu);
-	  //menu_read_id();
-	 // menu_single_conversion();
-	do_continuous_conversion(1, pAd7124_dev1);
+	csPort = CS1_GPIO_Port;
+	csPin = CS1_Pin;
+	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
+	csPort = CS2_GPIO_Port;
+	csPin = CS2_Pin;
+	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
+	csPort = CS3_GPIO_Port;
+	csPin = CS3_Pin;
+	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
+
+	for (int i = 0; i < 10; i++)
+	{
+		printf("%.6f \t", convertedVoltage[i]);
+	}
+	printf ("\r\n");
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

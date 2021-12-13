@@ -258,7 +258,7 @@ static void clear_channel_samples(void)
  *            and assigned to the channel they come from. Escape key an be used
  *            to exit the loop
  */
-int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd7124_dev)
+int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd7124_dev, float* resultArrayPointer, uint8_t startPoint)
 {
 	int32_t error_code;
 	int32_t sample_data;
@@ -343,7 +343,7 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 		}
 		float convertedSample = 0;
 		convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
-		convertedSample = convertedSample;
+		*(resultArrayPointer + startPoint + channel_read) = convertedSample;
 		//dislay_channel_samples(SHOW_ENABLED_CHANNELS, display_mode);
 
 
