@@ -119,7 +119,8 @@ int main(void)
   /* Initialize the AD7124 application before the main loop */
 	int32_t setupResult;
 	uint8_t eCnt = 0;
-	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, pAd7124_dev1)) < 0 ) {
+
+	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, pAd7124_dev1, (uint8_t)CS1_GPIO_Port, (uint8_t)CS1_Pin)) < 0 ) {
 
 	}
 	else

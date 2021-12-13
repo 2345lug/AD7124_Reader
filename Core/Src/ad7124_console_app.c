@@ -97,7 +97,7 @@ static uint32_t channel_samples_count[AD7124_CHANNEL_COUNT] = {0};
  *  		   the device.  A call to init the SPI port is made, but may not
  *  		   actually do very much, depending on the platform
  */
-int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev)
+int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev, uint8_t inPort, uint8_t inPin)
 {
 	/*
 	 * Copy one of the default/user configs to the live register memory map
@@ -127,6 +127,8 @@ int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev)
   			2500000, 		// Max SPI Speed
   			0,				// Chip Select
 			SPI_MODE_3,		// CPOL = 1, CPHA =1
+			inPort,
+			inPin,
 			NULL
   		},
   		ad7124_register_map,
