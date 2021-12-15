@@ -42,6 +42,7 @@
 .mxproject
 TrueSTUDIO/
 /Debug/
+Debug/
 /Documentation/
 *.launch
 core

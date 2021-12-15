@@ -351,6 +351,8 @@ struct ad7124_dev {
 	int16_t use_crc;
 	int16_t check_ready;
 	int16_t spi_rdy_poll_cnt;
+	uint16_t initialized;
+
 };
 
 struct ad7124_init_param {

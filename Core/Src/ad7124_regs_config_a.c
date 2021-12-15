@@ -1,12 +1,14 @@
 /*!
  *****************************************************************************
-  @file:  ad7124_console_app.h
+  @file:  ad7124_regs_config_a.c
 
-  @brief: defines the console menu structure for the AD7124 example code
+  @brief: Configuration file A for AD7124
 
   @details:
  -----------------------------------------------------------------------------
-Copyright (c) 2019 Analog Devices, Inc.  All rights reserved.
+Copyright (c) 2019 Analog Devices, Inc.
+
+All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -46,19 +48,66 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *****************************************************************************/
 
-#ifndef AD7124_CONSOLE_APP_H_
-#define AD7124_CONSOLE_APP_H_
+#include "ad7124_regs.h"
 
-#include "adi_console_menu.h"
-
-/* #defines */
-#define AD7124_CONFIG_A       0
-#define AD7124_CONFIG_B       1
-
-/* Public Declarations */
-int32_t ad7124_app_initialize(uint8_t configID);
-
-extern console_menu ad7124_main_menu;
-
-
-#endif /* AD7124_CONSOLE_APP_H_ */
+const struct ad7124_st_reg ad7124_regs_config_a[AD7124_REG_NO] = {
+{0x00, 0x00, 1, 2},
+{0x01, 0x0708, 2, 1},
+{0x02, 0x000000, 3, 2},
+//{0x03, 0x000000, 3, 1},
+{0x03, 0b000000000010010010110100, 3, 1},
+//{0x03, 0b010010101101100000000000, 3, 1},
+{0x04, 0x0000, 2, 1},
+{0x05, 0x00, 1, 2},
+{0x06, 0x000000, 3, 2},
+{0x07, 0x000044, 3, 1},
+{0x08, 0x00, 1, 2},
+{0x09, 0b1000000001100100, 2, 1},
+{0x0A, 0b1000000011000111, 2, 1},
+{0x0B, 0x0001, 2, 1},
+{0x0C, 0x0001, 2, 1},
+{0x0D, 0x0001, 2, 1},
+{0x0E, 0x0001, 2, 1},
+{0x0F, 0x0001, 2, 1},
+{0x10, 0x0001, 2, 1},
+{0x11, 0x0001, 2, 1},
+{0x12, 0x0001, 2, 1},
+{0x13, 0x0001, 2, 1},
+{0x14, 0x0001, 2, 1},
+{0x15, 0x0001, 2, 1},
+{0x16, 0x0001, 2, 1},
+{0x17, 0x0001, 2, 1},
+{0x18, 0x0001, 2, 1},
+{0x19, 0b0000100001100001, 2, 1},
+{0x1A, 0b0000100001100001, 2, 1},
+{0x1B, 0x60, 2, 1},
+{0x1C, 0x60, 2, 1},
+{0x1D, 0x60, 2, 1},
+{0x1E, 0x60, 2, 1},
+{0x1F, 0x60, 2, 1},
+{0x20, 0x60, 2, 1},
+{0x21, 0x60001, 3, 1},
+{0x22, 0x60001, 3, 1},
+{0x23, 0x060180, 3, 1},
+{0x24, 0x060180, 3, 1},
+{0x25, 0x060180, 3, 1},
+{0x26, 0x060180, 3, 1},
+{0x27, 0x060180, 3, 1},
+{0x28, 0x060014, 3, 1},
+{0x29, 0x800000, 3, 1},
+{0x2A, 0x800000, 3, 1},
+{0x2B, 0x800000, 3, 1},
+{0x2C, 0x800000, 3, 1},
+{0x2D, 0x800000, 3, 1},
+{0x2E, 0x800000, 3, 1},
+{0x2F, 0x800000, 3, 1},
+{0x30, 0x800000, 3, 1},
+{0x31, 0x500000, 3, 1},
+{0x32, 0x500000, 3, 1},
+{0x33, 0x500000, 3, 1},
+{0x34, 0x500000, 3, 1},
+{0x35, 0x500000, 3, 1},
+{0x36, 0x500000, 3, 1},
+{0x37, 0x500000, 3, 1},
+{0x38, 0x500000, 3, 1},
+};

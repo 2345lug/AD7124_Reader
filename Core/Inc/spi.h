@@ -67,6 +67,8 @@ typedef struct spi_init_param {
 	uint32_t	max_speed_hz;
 	uint8_t		chip_select;
 	enum spi_mode	mode;
+	uint8_t pinPort;
+	uint8_t pin;
 	void		*extra;
 } spi_init_param;
 
@@ -74,6 +76,8 @@ typedef struct spi_desc {
 	uint32_t	max_speed_hz;
 	uint8_t		chip_select;
 	enum spi_mode	mode;
+	uint8_t pinPort;
+	uint8_t pin;
 	void		*extra;
 } spi_desc;
 

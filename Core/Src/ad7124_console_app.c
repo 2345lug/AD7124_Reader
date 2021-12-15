@@ -80,7 +80,7 @@ POSSIBILITY OF SUCH DAMAGE.
 static struct ad7124_st_reg ad7124_register_map[AD7124_REG_NO];
 
 // Pointer to the struct representing the AD7124 device
-static struct ad7124_dev * pAd7124_dev = NULL;
+
 
 // Last Sampled values for All ADC channels
 static uint32_t channel_samples[AD7124_CHANNEL_COUNT] = {0};
@@ -97,7 +97,7 @@ static uint32_t channel_samples_count[AD7124_CHANNEL_COUNT] = {0};
  *  		   the device.  A call to init the SPI port is made, but may not
  *  		   actually do very much, depending on the platform
  */
-int32_t ad7124_app_initialize(uint8_t configID)
+int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev, uint8_t inPort, uint8_t inPin, uint32_t* pointerOutput)
 {
 	/*
 	 * Copy one of the default/user configs to the live register memory map
@@ -127,6 +127,8 @@ int32_t ad7124_app_initialize(uint8_t configID)
   			2500000, 		// Max SPI Speed
   			0,				// Chip Select
 			SPI_MODE_3,		// CPOL = 1, CPHA =1
+			inPort,
+			inPin,
 			NULL
   		},
   		ad7124_register_map,
@@ -134,7 +136,12 @@ int32_t ad7124_app_initialize(uint8_t configID)
   		10000				// Retry count for polling
   	};
 
-  return(ad7124_setup(&pAd7124_dev, sAd7124_init));
+  int32_t setupResult = ad7124_setup(&pAd7124_dev, sAd7124_init);
+  *pointerOutput = (pAd7124_dev);
+  return(setupResult);
+
+
+
 }
 
 // Private Functions
@@ -164,7 +171,7 @@ static bool was_escape_key_pressed(void)
  *
  * @details
  */
-static void read_status_register(void)
+static void read_status_register(struct ad7124_dev * pAd7124_dev)
 {
 	if (ad7124_read_register(pAd7124_dev, &ad7124_register_map[AD7124_Status]) < 0) {
 	   printf("\r\nError Encountered reading Status register\r\n");
@@ -183,7 +190,7 @@ static void read_status_register(void)
  * @param showOnlyEnabledChannels  only channels that are enabled are displayed
  *
  */
-static void dislay_channel_samples(bool showOnlyEnabledChannels, uint8_t console_mode)
+static void dislay_channel_samples(bool showOnlyEnabledChannels, uint8_t console_mode, struct ad7124_dev * pAd7124_dev)
 {
 	switch(console_mode) {
 		case DISPLAY_DATA_TABULAR:
@@ -251,16 +258,18 @@ static void clear_channel_samples(void)
  *            and assigned to the channel they come from. Escape key an be used
  *            to exit the loop
  */
-static int32_t do_continuous_conversion(uint8_t display_mode)
+int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd7124_dev, float* resultArrayPointer, uint8_t startPoint)
 {
 	int32_t error_code;
 	int32_t sample_data;
-
+	static uint32_t initialized[10] = { 0 };
+	if (initialized[startPoint] == 0)
+	{
 	// Clear the ADC CTRL MODE bits, has the effect of selecting continuous mode
     ad7124_register_map[AD7124_ADC_Control].value &= ~(AD7124_ADC_CTRL_REG_MODE(0xf));
 	if ( (error_code = ad7124_write_register(pAd7124_dev, ad7124_register_map[AD7124_ADC_Control]) ) < 0) {
 		printf("Error (%ld) setting AD7124 Continuous conversion mode.\r\n", error_code);
-		adi_press_any_key_to_continue();
+		//adi_press_any_key_to_continue();
 		return(MENU_CONTINUE);
 	}
 
@@ -289,10 +298,10 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
 		}
 		printf("\r\n");
 	}
-
+	initialized[startPoint] = 1;
+	}
 	// Continuously read the channels, and store sample values
-    while (was_escape_key_pressed() != true) {
-    	toggle_activity_led();
+       	toggle_activity_led();
 
     	if (display_mode == DISPLAY_DATA_TABULAR) {
     		adi_clear_console();
@@ -310,16 +319,19 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
 
     	if ( (error_code = ad7124_wait_for_conv_ready(pAd7124_dev, 10000)) < 0) {
     		printf("Error/Timeout waiting for conversion ready %ld\r\n", error_code);
-    		continue;
+    		//continue;
     	}
 
     	if ( (error_code = ad7124_read_data(pAd7124_dev, &sample_data)) < 0) {
 			printf("Error reading ADC Data (%ld).\r\n", error_code);
-			continue;
+			//continue;
 		}
 
 		/*
 		 * No error, need to process the sample, what channel has been read? update that channelSample
+		 for (uint8_t i = 0; i < AD7124_CHANNEL_COUNT; i++) {
+			channel_read = ad7124_register_map[AD7124_Status].value & 0x0000000F;
+		}
 		 */
 		uint8_t channel_read = ad7124_register_map[AD7124_Status].value & 0x0000000F;
 
@@ -329,10 +341,15 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
 		} else {
 			printf("Channel Read was %d, which is not < AD7124_CHANNEL_COUNT\r\n", channel_read);
 		}
+		float convertedSample = 0;
+	    float temperatureValue = 0;
+		convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
+		*(resultArrayPointer + startPoint + channel_read) = convertedSample;
 
-		dislay_channel_samples(SHOW_ENABLED_CHANNELS, display_mode);
-    }
+		//dislay_channel_samples(SHOW_ENABLED_CHANNELS, display_mode);
 
+
+	/*
     // All done, ADC put into standby mode
     ad7124_register_map[AD7124_ADC_Control].value &= ~(AD7124_ADC_CTRL_REG_MODE(0xf));
     // 2 = sleep/standby mode
@@ -342,7 +359,7 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
 		printf("Error (%ld) setting AD7124 ADC into standby mode.\r\n", error_code);
 		adi_press_any_key_to_continue();
 	}
-
+	*/
 	return(MENU_CONTINUE);
 }
 
@@ -354,11 +371,11 @@ static int32_t do_continuous_conversion(uint8_t display_mode)
  */
 static int32_t menu_continuous_conversion_tabular(void)
 {
-	do_continuous_conversion(DISPLAY_DATA_TABULAR);
+	//do_continuous_conversion(DISPLAY_DATA_TABULAR);
 
 	adi_clear_console();
 	printf("Continuous Conversion completed...\r\n\r\n");
-	dislay_channel_samples(SHOW_ALL_CHANNELS, DISPLAY_DATA_TABULAR);
+	//dislay_channel_samples(SHOW_ALL_CHANNELS, DISPLAY_DATA_TABULAR);
 	adi_press_any_key_to_continue();
 
 	return(MENU_CONTINUE);
@@ -372,7 +389,7 @@ static int32_t menu_continuous_conversion_tabular(void)
  */
 static int32_t menu_continuous_conversion_stream(void)
 {
-	do_continuous_conversion(DISPLAY_DATA_STREAM);
+	//do_continuous_conversion(DISPLAY_DATA_STREAM);
 	printf("Continuous Conversion completed...\r\n\r\n");
 	adi_press_any_key_to_continue();
 	return(MENU_CONTINUE);
@@ -388,100 +405,6 @@ static int32_t menu_continuous_conversion_stream(void)
  *             single conversion run again, until no channels are enabled.
  *             The original enable state of each channel is then restored.
  */
-static int32_t menu_single_conversion(void)
-{
-	int32_t    error_code;
-	uint16_t   channel_enable_mask = 0;
-	uint8_t    channel_count = 0;
-	int32_t    sample_data;
-
-	// Need to store which channels are enabled in this config so it can be restored
-	for (uint8_t i = 0; i < AD7124_CHANNEL_COUNT; i++) {
-		if (ad7124_register_map[AD7124_Channel_0 + i].value & AD7124_CH_MAP_REG_CH_ENABLE) {
-			channel_enable_mask |= (1 << i);
-			channel_count++;
-		}
-	}
-
-	clear_channel_samples();
-	adi_clear_console();
-	printf("Running Single conversion mode...\r\nPress Escape to stop\r\n\r\n");
-
-	// Clear the ADC CTRL MODE bits, selecting continuous mode
-    ad7124_register_map[AD7124_ADC_Control].value &= ~(AD7124_ADC_CTRL_REG_MODE(0xf));
-
-	// read the channels, and store sample values
-    for (uint8_t loopCount = 0; ((was_escape_key_pressed()!= true ) && (loopCount < channel_count)) ; loopCount++) {
-    	toggle_activity_led();
-
-    	// 1 = single conversion mode
-        ad7124_register_map[AD7124_ADC_Control].value |= AD7124_ADC_CTRL_REG_MODE(1);
-
-    	if ( (error_code = ad7124_write_register(pAd7124_dev, ad7124_register_map[AD7124_ADC_Control]) ) < 0) {
-    		printf("Error (%ld) setting AD7124 Single conversion mode.\r\n", error_code);
-    		adi_press_any_key_to_continue();
-    		continue;
-    	}
-
-        /*
-         *  this polls the status register READY/ bit to determine when conversion is done
-         *  this also ensures the STATUS register value is up to date and contains the
-         *  channel that was sampled as well. No need to read STATUS separately
-         */
-    	if ( (error_code = ad7124_wait_for_conv_ready(pAd7124_dev, 10000)) < 0) {
-    		printf("Error/Timeout waiting for conversion ready %ld\r\n", error_code);
-    		continue;
-    	}
-
-    	if ( (error_code = ad7124_read_data(pAd7124_dev, &sample_data)) < 0) {
-			printf("Error reading ADC Data (%ld).\r\n", error_code);
-			continue;
-		}
-    	/*
-		 * No error, need to process the sample, what channel has been read? update that channelSample
-		 */
-		uint8_t channelRead = ad7124_register_map[AD7124_Status].value & 0x0000000F;
-
-		if (channelRead < AD7124_CHANNEL_COUNT) {
-			channel_samples[channelRead] = sample_data;
-			channel_samples_count[channelRead]++;
-
-			/* also need to clear the channel enable bit so the next single conversion cycle will sample the next channel */
-			ad7124_register_map[AD7124_Channel_0 + channelRead].value &= ~AD7124_CH_MAP_REG_CH_ENABLE;
-			if ( (error_code = ad7124_write_register(pAd7124_dev, ad7124_register_map[AD7124_Channel_0 + channelRead]) ) < 0) {
-				printf("Error (%ld) Clearing channel %d Enable bit.\r\n", error_code, channelRead);
-				adi_press_any_key_to_continue();
-				continue;
-			}
-		} else {
-			printf("Channel Read was %d, which is not < AD7124_CHANNEL_COUNT\r\n", channelRead);
-		}
-    }
-
-    // All done, ADC put into standby mode
-    ad7124_register_map[AD7124_ADC_Control].value &= ~(AD7124_ADC_CTRL_REG_MODE(0xf));
-    // 2 = sleep/standby mode
-    ad7124_register_map[AD7124_ADC_Control].value |= AD7124_ADC_CTRL_REG_MODE(2);
-
-	// Need to restore the channels that were disabled during acquisition
-	for (uint8_t i = 0; i < AD7124_CHANNEL_COUNT; i++) {
-		if (channel_enable_mask & (1 << i)) {
-			ad7124_register_map[AD7124_Channel_0 + i].value |= AD7124_CH_MAP_REG_CH_ENABLE;
-	    	if ( (error_code = ad7124_write_register(pAd7124_dev, ad7124_register_map[AD7124_Channel_0 + i]) ) < 0) {
-	    		printf("Error (%ld) Setting channel %d Enable bit.\r\r\n", error_code, i);
-	    		adi_press_any_key_to_continue();
-	    		return(MENU_CONTINUE);
-	    	}
-		}
-	}
-
-	printf("Single Conversion completed...\r\n\r\n");
-	dislay_channel_samples(SHOW_ENABLED_CHANNELS, DISPLAY_DATA_TABULAR);
-
-	adi_press_any_key_to_continue();
-	return(MENU_CONTINUE);
-}
-
 
 /*!
  * @brief      menu item that reads the status register the AD7124
@@ -490,7 +413,7 @@ static int32_t menu_single_conversion(void)
  */
 static int32_t menu_read_status(void)
 {
-	read_status_register();
+	//read_status_register();
 	adi_press_any_key_to_continue();
 	return(MENU_CONTINUE);
 }
@@ -500,8 +423,8 @@ static int32_t menu_read_status(void)
  * @brief      reads the ID register on the AD7124
  *
  * @details
- */
-static int32_t menu_read_id(void)
+
+int32_t menu_read_id(void)
 {
 	if (ad7124_read_register(pAd7124_dev, &ad7124_register_map[AD7124_ID]) < 0) {
 	   printf("\r\nError Encountered reading ID register\r\n");
@@ -512,13 +435,13 @@ static int32_t menu_read_id(void)
 	adi_press_any_key_to_continue();
 	return(MENU_CONTINUE);
 }
-
+*/
 
 /*!
  * @brief      Initialize the part with a specific configuration
  *
  * @details
- */
+
 static void init_with_configuration(uint8_t configID)
 {
 	int32_t status = 0;
@@ -540,14 +463,14 @@ static void init_with_configuration(uint8_t configID)
 	}
 	adi_press_any_key_to_continue();
 }
-
+*/
 
 /*
  * @brief      Sends a reset command on the SPI to reset the AD7124
  *
  * @details
  */
-static int32_t menu_reset(void)
+static int32_t menu_reset(struct ad7124_dev * pAd7124_dev)
 {
 	if (ad7124_reset(pAd7124_dev)  < 0)
 	{
@@ -585,53 +508,3 @@ static int32_t menu_reset_to_configuration_b(void)
 	init_with_configuration(AD7124_CONFIG_B);
 	return(MENU_CONTINUE);
 }
-
-
-/*
- * Definition of the Sampling Menu Items and menu itself
- */
-static console_menu_item acquisition_menu_items[] = {
-		{"Single Conversion Mode",	                 	'S', menu_single_conversion},
-	    {"Continuous Conversion Mode - Table View",	    'T', menu_continuous_conversion_tabular},
-		{"Continuous Conversion Mode - Stream Data",	'C', menu_continuous_conversion_stream},
-};
-
-static console_menu acquisition_menu = {
-    "Data Acquisition Menu",
-	acquisition_menu_items,
-	ARRAY_SIZE(acquisition_menu_items),
-	true
-};
-
-
-/*!
- * @brief      displays and handles the Sample Channel menu
- *
- * @details
- */
-static int32_t menu_sample_channels(void)
-{
-	return(adi_do_console_menu(&acquisition_menu));
-}
-
-
-/*
- * Definition of the Main Menu Items and menu itself
- */
-console_menu_item main_menu_items[] = {
-	{"Reset to Default Configuration",	'R', menu_reset},
-	{"Reset to Configuration A",		'A', menu_reset_to_configuration_a},
-    {"Reset to Configuration B",		'B', menu_reset_to_configuration_b},
-	{"", 								'\00', NULL},
-	{"Read ID Register",				'I', menu_read_id},
-	{"Read Status Register",			'T', menu_read_status},
-	{"", 								'\00', NULL},
-    {"Sample Channels...",				'S', menu_sample_channels},
-};
-
-console_menu ad7124_main_menu = {
-    "AD7124 Main Menu",
-    main_menu_items,
-	ARRAY_SIZE(main_menu_items),
-	false
-};

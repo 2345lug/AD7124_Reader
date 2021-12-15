@@ -27,8 +27,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "AD7124.h"      /* AD7124 definitions */
-#include "AD7124_regs.h" /* We want to use the ad7124_regs array defined in ad7124_regs.h/.c */
+#include <string.h>
+#include "ad7124_console_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +56,12 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+GPIO_TypeDef* csPort = CS1_GPIO_Port;
+uint8_t csPin = CS1_Pin;
+float convertedVoltage[10] = { 0 };
+struct ad7124_dev * pAd7124_dev1 = NULL;
+struct ad7124_dev * pAd7124_dev2 = NULL;
+struct ad7124_dev * pAd7124_dev3 = NULL;
 
 /* USER CODE END PV */
 
@@ -110,15 +116,60 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  /* Initialize the AD7124 application before the main loop */
+	int32_t setupResult;
+	uint32_t resultPointer;
+	uint8_t eCnt = 0;
 
+	csPort = CS1_GPIO_Port;
+	csPin = CS1_Pin;
+	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev1, (uint8_t)CS1_GPIO_Port, (uint8_t)CS1_Pin, &resultPointer )) < 0 ) {
+	}
+	else
+	{
+		pAd7124_dev1 = resultPointer;
+	}
+	eCnt++;
+	csPort = CS2_GPIO_Port;
+	csPin = CS2_Pin;
+		if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev2, (uint8_t)CS2_GPIO_Port, (uint8_t)CS2_Pin, &resultPointer )) < 0 ) {
+		}
+		else
+		{
+			pAd7124_dev2 = resultPointer;
+		}
+		eCnt++;
+	csPort = CS3_GPIO_Port;
+	csPin = CS3_Pin;
+	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev3, (uint8_t)CS3_GPIO_Port, (uint8_t)CS3_Pin, &resultPointer )) < 0 ) {
+	}
+	else
+	{
+		pAd7124_dev3 = resultPointer;
+	}
+	eCnt++;
+	printf("Sucessfully booted \r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	csPort = CS1_GPIO_Port;
+	csPin = CS1_Pin;
+	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
+	csPort = CS2_GPIO_Port;
+	csPin = CS2_Pin;
+	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
+	csPort = CS3_GPIO_Port;
+	csPin = CS3_Pin;
+	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 
+	for (int i = 0; i < 6; i++)
+	{
+		printf("%.6f \t", convertedVoltage[i]);
+	}
+	printf ("\r\n");
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -310,17 +361,17 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+  hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi1.Init.CRCPolynomial = 7;
   hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
   if (HAL_SPI_Init(&hspi1) != HAL_OK)
   {
     Error_Handler();
@@ -497,18 +548,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void ADC_INIT(){
-    /* Initialize AD7124 device. */
-    ret = AD7124_Setup(ad7124_handler, AD7124_SLAVE_ID, (ad7124_st_reg *)&ad7124_regs);
-    if (ret < 0)
-    {
-        /* AD7124 initialisation failed, check the value of ret! */
-    }
-    else
-    {
-        /* AD7124 initialization OK */
-    }
-}
+
 /* USER CODE END 4 */
 
 /**
