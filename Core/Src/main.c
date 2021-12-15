@@ -121,8 +121,8 @@ int main(void)
 	uint32_t resultPointer;
 	uint8_t eCnt = 0;
 
-	csPort = CS2_GPIO_Port;
-	csPin = CS2_Pin;
+	csPort = CS1_GPIO_Port;
+	csPin = CS1_Pin;
 	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev1, (uint8_t)CS1_GPIO_Port, (uint8_t)CS1_Pin, &resultPointer )) < 0 ) {
 	}
 	else
@@ -130,8 +130,8 @@ int main(void)
 		pAd7124_dev1 = resultPointer;
 	}
 	eCnt++;
-	csPort = CS1_GPIO_Port;
-	csPin = CS1_Pin;
+	csPort = CS2_GPIO_Port;
+	csPin = CS2_Pin;
 		if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev2, (uint8_t)CS2_GPIO_Port, (uint8_t)CS2_Pin, &resultPointer )) < 0 ) {
 		}
 		else
@@ -155,11 +155,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	csPort = CS2_GPIO_Port;
-	csPin = CS2_Pin;
-	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
 	csPort = CS1_GPIO_Port;
 	csPin = CS1_Pin;
+	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
+	csPort = CS2_GPIO_Port;
+	csPin = CS2_Pin;
 	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
 	csPort = CS3_GPIO_Port;
 	csPin = CS3_Pin;

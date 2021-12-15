@@ -342,8 +342,10 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 			printf("Channel Read was %d, which is not < AD7124_CHANNEL_COUNT\r\n", channel_read);
 		}
 		float convertedSample = 0;
+	    float temperatureValue = 0;
 		convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
-		*(resultArrayPointer + startPoint + channel_read) = convertedSample;
+		*(resultArrayPointer + startPoint + channel_read) = sample_data;
+
 		//dislay_channel_samples(SHOW_ENABLED_CHANNELS, display_mode);
 
 
