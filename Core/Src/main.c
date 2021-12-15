@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "ad7124_console_app.h"
+#include <rtcProcess.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -124,6 +125,8 @@ int main(void)
 	int32_t setupResult;
 	uint32_t resultPointer;
 	uint8_t eCnt = 0;
+
+	rtcConsoleInput();
 
 	csPort = CS1_GPIO_Port;
 	csPin = CS1_Pin;

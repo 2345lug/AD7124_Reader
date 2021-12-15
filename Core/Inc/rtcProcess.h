@@ -8,7 +8,7 @@
 #ifndef INC_RTCPROCESS_H_
 #define INC_RTCPROCESS_H_
 
-
+void rtcConsoleInput(void);
 
 
 #endif /* INC_RTCPROCESS_H_ */
