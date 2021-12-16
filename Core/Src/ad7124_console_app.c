@@ -110,11 +110,6 @@ int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev,
 			memcpy(ad7124_register_map, ad7124_regs_config_a, sizeof(ad7124_register_map));
 			break;
 		}
-		case AD7124_CONFIG_B:
-		{
-			memcpy(ad7124_register_map, ad7124_regs_config_b, sizeof(ad7124_register_map));
-			break;
-		}
 		default:
 			// Not a defined configID
 			return(FAILURE);
@@ -392,7 +387,9 @@ static float convertResistance (float inputSample)
   static double referenceResistor = 2.49E3;
   static double gain = 1;
   double resistance = 0;
+  double temperature = 0;
   resistance = ((inputSample - zero) * referenceResistor) / (zero * gain);
+  temperature = (resistance - 1000) / 0.0385;
   return (float)resistance;
 }
 

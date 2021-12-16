@@ -57,6 +57,7 @@ SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
 UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
 GPIO_TypeDef* csPort = CS1_GPIO_Port;
@@ -76,6 +77,7 @@ static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_DMA_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -118,6 +120,7 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI2_Init();
   MX_USART1_UART_Init();
+  MX_DMA_Init();
   if (MX_FATFS_Init() != APP_OK) {
     Error_Handler();
   }
@@ -165,6 +168,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint32_t startTicks = 0;
   uint32_t prevTicks = 0;
+  static uint8_t transmitBuffer[255] = { 0 };
   while (1)
   {
     /* USER CODE END WHILE */
@@ -191,13 +195,17 @@ int main(void)
 	csPin = CS3_Pin;
 	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 
-	for (int i = 0; i < 6; i++)
-	{
-	  printf("%.2f \t", convertedVoltage[i]);
-	}
-	printf ("\r\n");
 	startTicks = HAL_GetTick();
-	printf("%d \t", (startTicks - prevTicks));
+	sprintf(transmitBuffer,"%d \t", (startTicks - prevTicks));
+
+	for (int i = 0; i < CHANNEL_COUNT; i++)
+	{
+	  sprintf((transmitBuffer+ 3 + i*TEMPERATURE_SYMBOLS_COUNT),"%3.1f\t", convertedVoltage[i]);
+	}
+	sprintf ((transmitBuffer+ 3 + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
+	HAL_UART_Transmit_DMA(&huart1, transmitBuffer, strlen(transmitBuffer));
+
+
 	prevTicks = HAL_GetTick();
 
   }
@@ -478,6 +486,22 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
 }
 
