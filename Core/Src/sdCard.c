@@ -14,6 +14,7 @@ void sdCardInit (void)
   FRESULT fres; //Result after operations
 
   //Open the file system
+  HAL_Delay(1000);
   fres = f_mount(&FatFs, "", 1); //1=mount now
   if (fres != FR_OK)
   {
