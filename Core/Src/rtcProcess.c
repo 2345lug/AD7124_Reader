@@ -10,6 +10,11 @@ extern RTC_HandleTypeDef hrtc; //Defined in main.c
 static HAL_StatusTypeDef setTime (uint8_t hours, uint8_t minutes, uint8_t seconds);
 static HAL_StatusTypeDef setDate (uint8_t hours, uint8_t minutes, uint8_t seconds);
 
+static uint8_t inputStatus = 0;
+static uint32_t startTicks = 0;
+static uint8_t inputChars[INPUT_TIME_STRING_SIZE] = {0};
+const static uint8_t* stringTemplate = TIME_MASK;
+
 void printTimeUart(void)
 {
 	RTC_TimeTypeDef sTime = {0};
@@ -23,9 +28,7 @@ void printTimeUart(void)
 
 void rtcConsoleInput(void)
 {
-	static uint8_t inputStatus = 0;
-	static uint32_t startTicks = 0;
-	static uint8_t inputChars[INPUT_TIME_STRING_SIZE] = {0};
+
 	if (inputStatus == 0)
 	{
 		startTicks = HAL_GetTick();
@@ -45,7 +48,7 @@ void rtcConsoleInput(void)
 	  if (keyPressed == 'T')
 	  {
 		inputStatus = 2;
-		printf("input date time in next format: hh:mm_dd:MM:yy_D, where D is number of day of the week (1 - Monday) \r\n");
+		printf("Input date time in next format: hh:mm_dd-MM-yy_D, where D is number of day of the week (1 - Monday) or s for skip \r\n");
 	  }
 	  currentTicks = HAL_GetTick();
 	}
@@ -61,14 +64,44 @@ void rtcConsoleInput(void)
 			{
 
               inputChars[charCount] = keyPressed;
-              charCount++;
+
               HAL_UART_Transmit(&huart1, (uint8_t *)&keyPressed, 1, 0xFFFFFFFF);
+              if (keyPressed == 's')
+              {
+                printf ("Skipping time setup \r\n");
+                return 0;
+              }
+
+              if (stringTemplate[charCount] == 'i')
+              {
+                if (keyPressed < 48 || keyPressed > 57)
+                {
+                  printf ("Wrong key enetered! \r\n");
+                  startTicks = HAL_GetTick();
+                  inputStatus = 1;
+                  charCount = 0;
+                  break;
+                }
+              }
+              else
+              {
+            	if (keyPressed != stringTemplate[charCount])
+            	{
+            	  printf ("Error key enetered! \r\n");
+            	  startTicks = HAL_GetTick();
+            	  inputStatus = 1;
+            	  charCount = 0;
+            	  break;
+            	}
+              }
+              charCount++;
               //printf("%c %d %d \0", keyPressed, keyPressed, charCount);
 			}
-		    break;
+			break;
+
 		}
 	}
-	printf ("Got values is %s \r\n", inputChars);
+	printf ("Got values %s \r\n", inputChars);
 	return 0;
 }
 
