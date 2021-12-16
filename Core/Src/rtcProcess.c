@@ -23,8 +23,8 @@ void printTimeUart(void)
 {
 	RTC_TimeTypeDef sTime = {0};
 	RTC_DateTypeDef sDate = {0};
-	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN); // RTC_FORMAT_BIN , RTC_FORMAT_BCD
-	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BCD); // RTC_FORMAT_BIN , RTC_FORMAT_BCD
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BCD);
 
 	printf("\r\nTime %02d:%02d:%02d Date %02d-%02d-%02d\r\n", sTime.Hours, sTime.Minutes, sTime.Seconds, sDate.Date, sDate.Month, sDate.Year);
 
