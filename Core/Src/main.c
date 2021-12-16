@@ -121,6 +121,10 @@ int main(void)
     Error_Handler();
   }
   /* USER CODE BEGIN 2 */
+
+  printTimeUart();
+  rtcConsoleInput();
+
   /* Initialize the AD7124 application before the main loop */
 	int32_t setupResult;
 	uint32_t resultPointer;

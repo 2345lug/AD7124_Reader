@@ -9,6 +9,17 @@ extern RTC_HandleTypeDef hrtc; //Defined in main.c
 static HAL_StatusTypeDef setTime (uint8_t hours, uint8_t minutes, uint8_t seconds);
 static HAL_StatusTypeDef setDate (uint8_t hours, uint8_t minutes, uint8_t seconds);
 
+void printTimeUart(void)
+{
+	RTC_TimeTypeDef sTime = {0};
+	RTC_DateTypeDef sDate = {0};
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN); // RTC_FORMAT_BIN , RTC_FORMAT_BCD
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+
+	printf("Time %d:%d:%d Date %d-%d-20%d\n", sTime.Hours, sTime.Minutes, sTime.Seconds, sDate.Date, sDate.Month, sDate.Year);
+
+}
+
 void rtcConsoleInput(void)
 {
 	static uint8_t inputStatus = 0;
@@ -48,6 +59,7 @@ void rtcConsoleInput(void)
 		    break;
 		}
 	}
+	printf ("Got values is %s \n", inputChars);
 	return 0;
 }
 

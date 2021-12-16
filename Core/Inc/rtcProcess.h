@@ -9,6 +9,6 @@
 #define INC_RTCPROCESS_H_
 
 void rtcConsoleInput(void);
-
+void printTimeUart(void);
 
 #endif /* INC_RTCPROCESS_H_ */
