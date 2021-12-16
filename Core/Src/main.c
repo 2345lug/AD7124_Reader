@@ -124,6 +124,7 @@ int main(void)
 
   printTimeUart();
   rtcConsoleInput();
+  HAL_Delay(1000);
 
   /* Initialize the AD7124 application before the main loop */
 	int32_t setupResult;
