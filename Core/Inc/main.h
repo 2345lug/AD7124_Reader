@@ -82,8 +82,6 @@ void Error_Handler(void);
 #define CS5_GPIO_Port GPIOB
 #define TRIG_5V_Pin GPIO_PIN_8
 #define TRIG_5V_GPIO_Port GPIOB
-
-#define SD_SPI_HANDLE hspi2
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

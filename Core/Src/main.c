@@ -301,7 +301,8 @@ static void MX_RTC_Init(void)
 
   /* USER CODE END RTC_Init 0 */
 
-
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
 
   /* USER CODE BEGIN RTC_Init 1 */
 
@@ -328,8 +329,6 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-
-
   /* USER CODE BEGIN RTC_Init 2 */
 
   /* USER CODE END RTC_Init 2 */
@@ -399,7 +398,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -502,7 +501,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = SD_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(SD_CS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BUTTON_Pin SD_DETECT_Pin */
