@@ -7,12 +7,16 @@
 #include "platform_support.h"
 
 extern RTC_HandleTypeDef hrtc; //Defined in main.c
-static HAL_StatusTypeDef setTime (uint8_t hours, uint8_t minutes, uint8_t seconds);
-static HAL_StatusTypeDef setDate (uint8_t hours, uint8_t minutes, uint8_t seconds);
+static HAL_StatusTypeDef setTime (uint8_t* timeArray);
+static HAL_StatusTypeDef setDate (uint8_t* dateArray);
+static void parseInputTime (uint8_t* inputString);
+static void parseInputDate (uint8_t* inputString);
+static void errorKeyEntered (void);
 
 static uint8_t inputStatus = 0;
 static uint32_t startTicks = 0;
 static uint8_t inputChars[INPUT_TIME_STRING_SIZE] = {0};
+static uint8_t inputCharCount = 0;
 const static uint8_t* stringTemplate = TIME_MASK;
 
 void printTimeUart(void)
@@ -53,8 +57,8 @@ void rtcConsoleInput(void)
 	  currentTicks = HAL_GetTick();
 	}
 
-	int charCount = 0;
-	while (inputStatus > 1 && charCount < INPUT_TIME_STRING_SIZE)
+
+	while (inputStatus > 1 && inputCharCount < INPUT_TIME_STRING_SIZE)
 	{
 		switch(inputStatus)
 		{
@@ -63,7 +67,7 @@ void rtcConsoleInput(void)
 			if (keyPressed > 0 && keyPressed < 255)
 			{
 
-              inputChars[charCount] = keyPressed;
+              inputChars[inputCharCount] = keyPressed;
 
               HAL_UART_Transmit(&huart1, (uint8_t *)&keyPressed, 1, 0xFFFFFFFF);
               if (keyPressed == 's')
@@ -72,45 +76,69 @@ void rtcConsoleInput(void)
                 return 0;
               }
 
-              if (stringTemplate[charCount] == 'i')
+              if (stringTemplate[inputCharCount] == 'i')
               {
                 if (keyPressed < 48 || keyPressed > 57)
                 {
-                  printf ("Wrong key enetered! \r\n");
-                  startTicks = HAL_GetTick();
-                  inputStatus = 1;
-                  charCount = 0;
+                  errorKeyEntered();
                   break;
                 }
               }
               else
               {
-            	if (keyPressed != stringTemplate[charCount])
+            	if (keyPressed != stringTemplate[inputCharCount])
             	{
-            	  printf ("Error key enetered! \r\n");
-            	  startTicks = HAL_GetTick();
-            	  inputStatus = 1;
-            	  charCount = 0;
+            	  errorKeyEntered();
             	  break;
             	}
               }
-              charCount++;
-              //printf("%c %d %d \0", keyPressed, keyPressed, charCount);
+              inputCharCount++;
+
 			}
 			break;
 
 		}
 	}
 	printf ("Got values %s \r\n", inputChars);
+	parseInputTime(inputChars);
+	parseInputDate(inputChars);
+	printTimeUart();
 	return 0;
 }
 
-static HAL_StatusTypeDef setTime (uint8_t hours, uint8_t minutes, uint8_t seconds)
+static void parseInputTime (uint8_t* inputString)
+{
+  uint8_t timeArray[3] = { 0 };
+  *(timeArray + 0) = (*(inputString + 0) - 48) * 10 + (*(inputString + 1) - 48);
+  *(timeArray + 1) = (*(inputString + 3) - 48) * 10 + (*(inputString + 4) - 48);
+  *(timeArray + 2) = 0;
+  setTime(timeArray);
+}
+//hh:mm_dd-MM-yy_D
+static void parseInputDate (uint8_t* inputString)
+{
+  uint8_t dateArray[3] = { 0 } ;
+  *(dateArray + 0) = (*(inputString + 6) - 48) * 10 + (*(inputString + 7) - 48);
+  *(dateArray + 1) = (*(inputString + 9) - 48) * 10 + (*(inputString + 10) - 48);
+  *(dateArray + 2) = (*(inputString + 12) - 48) * 10 + (*(inputString + 13) - 48);
+  *(dateArray + 3) = (*(inputString + 15) - 48);
+  setDate(dateArray);
+}
+
+static void errorKeyEntered (void)
+{
+  printf ("Error key enetered! \r\n");
+  startTicks = HAL_GetTick();
+  inputStatus = 1;
+  inputCharCount = 0;
+}
+
+static HAL_StatusTypeDef setTime (uint8_t* timeArray)
 {
   RTC_TimeTypeDef sTime = {0};
-  sTime.Hours = 0x0;
-  sTime.Minutes = 0x0;
-  sTime.Seconds = 0x0;
+  sTime.Hours = *(timeArray + 0);
+  sTime.Minutes = *(timeArray + 1);
+  sTime.Seconds = *(timeArray + 2);
   sTime.SubSeconds = 0x0;
   sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
   sTime.StoreOperation = RTC_STOREOPERATION_RESET;
@@ -119,15 +147,15 @@ static HAL_StatusTypeDef setTime (uint8_t hours, uint8_t minutes, uint8_t second
   return setupResult;
 }
 
-static HAL_StatusTypeDef setDate (uint8_t hours, uint8_t minutes, uint8_t seconds)
+static HAL_StatusTypeDef setDate (uint8_t* dateArray)
 {
   RTC_DateTypeDef sDate = {0};
   HAL_StatusTypeDef setupResult = HAL_OK;
 
-  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
-  sDate.Month = RTC_MONTH_JANUARY;
-  sDate.Date = 0x1;
-  sDate.Year = 0x0;
+  sDate.WeekDay = *(dateArray + 3);
+  sDate.Month = *(dateArray + 1);
+  sDate.Date =  *(dateArray + 0);
+  sDate.Year = *(dateArray + 2);
 
   if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
     {
