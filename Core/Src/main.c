@@ -31,6 +31,7 @@
 #include <string.h>
 #include "ad7124_console_app.h"
 #include <rtcProcess.h>
+#include "sdCard.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -121,7 +122,7 @@ int main(void)
     Error_Handler();
   }
   /* USER CODE BEGIN 2 */
-
+  sdCardInit();
   printTimeUart();
   rtcConsoleInput();
 
