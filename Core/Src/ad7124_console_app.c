@@ -87,6 +87,7 @@ static uint32_t channel_samples[AD7124_CHANNEL_COUNT] = {0};
 // How many times a given channel is sampled in total for one sample run
 static uint32_t channel_samples_count[AD7124_CHANNEL_COUNT] = {0};
 
+static float convertResistance (float inputSample);
 
 // Public Functions
 
@@ -343,8 +344,14 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 		}
 		float convertedSample = 0;
 	    float temperatureValue = 0;
+
 		convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
 		*(resultArrayPointer + startPoint + channel_read) = channel_samples[channel_read];
+
+		//convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
+	    convertedSample = convertResistance(channel_samples[channel_read]);
+	    *(resultArrayPointer + startPoint + channel_read) = convertedSample;
+
 
 		//dislay_channel_samples(SHOW_ENABLED_CHANNELS, display_mode);
 
@@ -363,6 +370,15 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 	return(MENU_CONTINUE);
 }
 
+static float convertResistance (float inputSample)
+{
+  static long zero = 1L << 23;
+  static double referenceResistor = 2.49E3;
+  static double gain = 1;
+  double resistance = 0;
+  resistance = ((inputSample - zero) * referenceResistor) / (zero * gain);
+  return (float)resistance;
+}
 
 /*!
  * @brief      Samples all enabled channels and displays in tabular form
