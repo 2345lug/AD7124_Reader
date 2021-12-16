@@ -8,6 +8,8 @@
 #ifndef INC_RTCPROCESS_H_
 #define INC_RTCPROCESS_H_
 
+#define INPUT_TIME_STRING_SIZE  16
+
 void rtcConsoleInput(void);
 void printTimeUart(void);
 

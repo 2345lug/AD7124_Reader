@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include "platform_support.h"
 
 extern RTC_HandleTypeDef hrtc; //Defined in main.c
 static HAL_StatusTypeDef setTime (uint8_t hours, uint8_t minutes, uint8_t seconds);
@@ -16,7 +17,7 @@ void printTimeUart(void)
 	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN); // RTC_FORMAT_BIN , RTC_FORMAT_BCD
 	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
-	printf("Time %d:%d:%d Date %d-%d-20%d\n", sTime.Hours, sTime.Minutes, sTime.Seconds, sDate.Date, sDate.Month, sDate.Year);
+	printf("\r\nTime %02d:%02d:%02d Date %02d-%02d-%02d\r\n", sTime.Hours, sTime.Minutes, sTime.Seconds, sDate.Date, sDate.Month, sDate.Year);
 
 }
 
@@ -24,7 +25,7 @@ void rtcConsoleInput(void)
 {
 	static uint8_t inputStatus = 0;
 	static uint32_t startTicks = 0;
-	static uint8_t inputChars[18] = {0};
+	static uint8_t inputChars[INPUT_TIME_STRING_SIZE] = {0};
 	if (inputStatus == 0)
 	{
 		startTicks = HAL_GetTick();
@@ -32,34 +33,42 @@ void rtcConsoleInput(void)
 	}
 
 	char keyPressed = 0;
-	printf ("If you want to change time press T \n");
-	while ((HAL_GetTick() - startTicks) < 3000 && inputStatus == 1)
+	uint32_t currentTicks = HAL_GetTick();
+	printf ("If you want to change time press T \r\n");
+	while ((currentTicks - startTicks) < 10000 && inputStatus == 1)
 	{
-	  keyPressed = toupper(getchar());
+	  keyPressed = toupper(getchar_nonblocking());
+	  if (keyPressed > 0 && keyPressed < 255)
+	  {
+		  HAL_UART_Transmit(&huart1, (uint8_t *)&keyPressed, 1, 0xFFFFFFFF);
+	  }
 	  if (keyPressed == 'T')
 	  {
-		inputStatus = 1;
-		printf("input date time in next format: hh:mm_dd:MM:yyyy_D, where D is number of day of the week (1 - Monday) \n");
+		inputStatus = 2;
+		printf("input date time in next format: hh:mm_dd:MM:yy_D, where D is number of day of the week (1 - Monday) \r\n");
 	  }
-
+	  currentTicks = HAL_GetTick();
 	}
 
 	int charCount = 0;
-	while (inputStatus > 1 && charCount < 18)
+	while (inputStatus > 1 && charCount < INPUT_TIME_STRING_SIZE)
 	{
 		switch(inputStatus)
 		{
 		  case 2:
-			keyPressed = getchar();
-			if (getchar > 0)
+			keyPressed = getchar_nonblocking();
+			if (keyPressed > 0 && keyPressed < 255)
 			{
+
               inputChars[charCount] = keyPressed;
               charCount++;
+              HAL_UART_Transmit(&huart1, (uint8_t *)&keyPressed, 1, 0xFFFFFFFF);
+              //printf("%c %d %d \0", keyPressed, keyPressed, charCount);
 			}
 		    break;
 		}
 	}
-	printf ("Got values is %s \n", inputChars);
+	printf ("Got values is %s \r\n", inputChars);
 	return 0;
 }
 
