@@ -186,7 +186,7 @@ int main(void)
 
 	for (int i = 0; i < 6; i++)
 	{
-	  printf("%.2f \t", convertedVoltage[i]);
+	  //printf("%.2f \t", convertedVoltage[i]);
 	}
 	printf ("\r\n");
 	startTicks = HAL_GetTick();
