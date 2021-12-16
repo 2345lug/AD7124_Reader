@@ -304,11 +304,6 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 	// Continuously read the channels, and store sample values
        	toggle_activity_led();
 
-    	if (display_mode == DISPLAY_DATA_TABULAR) {
-    		adi_clear_console();
-    		printf("Running continuous conversion mode...\r\nPress Escape to stop\r\n\r\n");
-    	}
-
 		/*
 		 *  this polls the status register READY/ bit to determine when conversion is done
 		 *  this also ensures the STATUS register value is up to date and contains the
