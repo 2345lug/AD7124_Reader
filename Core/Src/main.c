@@ -174,14 +174,21 @@ int main(void)
 	csPort = CS1_GPIO_Port;
 	csPin = CS1_Pin;
 	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
-	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
 	csPort = CS2_GPIO_Port;
 	csPin = CS2_Pin;
-	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
 	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
 	csPort = CS3_GPIO_Port;
 	csPin = CS3_Pin;
 	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
+
+	csPort = CS1_GPIO_Port;
+	csPin = CS1_Pin;
+	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
+	csPort = CS2_GPIO_Port;
+	csPin = CS2_Pin;
+	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
+	csPort = CS3_GPIO_Port;
+	csPin = CS3_Pin;
 	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 
 	for (int i = 0; i < 6; i++)
