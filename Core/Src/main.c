@@ -23,12 +23,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "app_fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
 #include "ad7124_console_app.h"
+#include <rtcProcess.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -115,7 +117,14 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI2_Init();
   MX_USART1_UART_Init();
+  if (MX_FATFS_Init() != APP_OK) {
+    Error_Handler();
+  }
   /* USER CODE BEGIN 2 */
+
+  printTimeUart();
+  rtcConsoleInput();
+
   /* Initialize the AD7124 application before the main loop */
 	int32_t setupResult;
 	uint32_t resultPointer;
@@ -155,6 +164,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
 	csPort = CS1_GPIO_Port;
 	csPin = CS1_Pin;
 	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
@@ -167,10 +179,9 @@ int main(void)
 
 	for (int i = 0; i < 6; i++)
 	{
-		printf("%.6f \t", convertedVoltage[i]);
+	  printf("%.6f \t", convertedVoltage[i]);
 	}
 	printf ("\r\n");
-    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -289,8 +300,7 @@ static void MX_RTC_Init(void)
 
   /* USER CODE END RTC_Init 0 */
 
-  RTC_TimeTypeDef sTime = {0};
-  RTC_DateTypeDef sDate = {0};
+
 
   /* USER CODE BEGIN RTC_Init 1 */
 
@@ -317,25 +327,8 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-  sTime.Hours = 0x0;
-  sTime.Minutes = 0x0;
-  sTime.Seconds = 0x0;
-  sTime.SubSeconds = 0x0;
-  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
-  sDate.Month = RTC_MONTH_JANUARY;
-  sDate.Date = 0x1;
-  sDate.Year = 0x0;
 
-  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
+
   /* USER CODE BEGIN RTC_Init 2 */
 
   /* USER CODE END RTC_Init 2 */
