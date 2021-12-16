@@ -83,7 +83,7 @@ void Error_Handler(void);
 #define TRIG_5V_Pin GPIO_PIN_8
 #define TRIG_5V_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+#define SD_SPI_HANDLE hspi2
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
