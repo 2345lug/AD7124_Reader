@@ -180,7 +180,7 @@ int main(void)
 
 	for (int i = 0; i < 6; i++)
 	{
-	  printf("%.6f \t", convertedVoltage[i]);
+	  printf("%.2f \t", convertedVoltage[i]);
 	}
 	printf ("\r\n");
   }
