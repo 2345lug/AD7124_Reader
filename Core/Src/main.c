@@ -163,19 +163,25 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t startTicks = 0;
+  uint32_t prevTicks = 0;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
 	csPort = CS1_GPIO_Port;
 	csPin = CS1_Pin;
+	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
 	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
 	csPort = CS2_GPIO_Port;
 	csPin = CS2_Pin;
 	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
+	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
 	csPort = CS3_GPIO_Port;
 	csPin = CS3_Pin;
+	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 
 	for (int i = 0; i < 6; i++)
@@ -183,6 +189,10 @@ int main(void)
 	  printf("%.2f \t", convertedVoltage[i]);
 	}
 	printf ("\r\n");
+	startTicks = HAL_GetTick();
+	printf("%d \t", (startTicks - prevTicks));
+	prevTicks = HAL_GetTick();
+
   }
   /* USER CODE END 3 */
 }
