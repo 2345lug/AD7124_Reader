@@ -11,7 +11,7 @@ FATFS FatFs; 	//Fatfs handle
 FIL fil = { 0 }; 		//File handle
 FRESULT fres; //Result after operations
 int8_t initState = 0;
-
+extern uint8_t sdCardPresent;
 void fileCreate(void)
 {
   uint8_t fileName[16] = { 0 };
@@ -29,9 +29,27 @@ void writeStringToFile(uint8_t* inputString, uint8_t bytesToWrite)
 {
   uint8_t bytesWritten;
   uint8_t writeBuffer[128] = { 0 };
-  memcpy(writeBuffer,inputString,bytesToWrite);
+  uint8_t byteCounter = 0;
+  for (int i = 0; i < bytesToWrite; i++)
+  {
+	  uint8_t tempChar = *(inputString + i);
+	  if (tempChar == '\0' || tempChar == '\r' || tempChar == 'n')
+	  {
+		tempChar = ' ';
+	  }
+	  else
+	  {
+		writeBuffer[byteCounter] = tempChar;
+		byteCounter++;
+
+
+	  }
+
+
+  }
+  //memcpy(writeBuffer,inputString,bytesToWrite);
   f_printf(&fil, "%s", writeBuffer);
-  //f_write(&fil, inputString, bytesToWrite, &bytesWritten);
+  //f_write(&fil, writeBuffer, bytesToWrite, &bytesWritten);
 }
 
 void fileClose(void)
@@ -50,6 +68,8 @@ void sdCardInit (void)
   if (fres != FR_OK)
   {
    printf("f_mount error (%i)\r\n", fres);
+   sdCardPresent = 0;
+   return;
 		//while(1);
   }
 
@@ -61,6 +81,8 @@ void sdCardInit (void)
     fres = f_getfree("", &free_clusters, &getFreeFs);
     if (fres != FR_OK) {
   	printf("f_getfree error (%i)\r\n", fres);
+  	sdCardPresent = 0;
+  	return;
   	//while(1);
     }
 

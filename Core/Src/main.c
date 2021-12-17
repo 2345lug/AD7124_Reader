@@ -137,10 +137,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   sdCardPresent = HAL_GPIO_ReadPin(SD_DETECT_GPIO_Port, SD_DETECT_Pin);
 
-  if (sdCardPresent != 0)
-  {
-	  sdCardInit();
-  }
+
+  sdCardInit();
   printTimeUart();
   rtcConsoleInput();
 
@@ -239,10 +237,10 @@ int main(void)
 		startTicks = HAL_GetTick();
 
 		overallTicks = startTicks - previousTicks;
-		sprintf(transmitBuffer,"%05d \t", overallTicks);
+		sprintf(transmitBuffer,"%05d\t", overallTicks);
 		for (int i = 0; i < CHANNEL_COUNT; i++)
 		{
-		  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%03.1f\t", convertedVoltage[i]);
+		  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%04.1f\t", convertedVoltage[i]);
 		}
 		sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
 		uint8_t transmitLenght = TX_LENGHT;
