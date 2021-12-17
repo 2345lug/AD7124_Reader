@@ -216,7 +216,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	if (cycleStart == 0)
+	if (cycleStart == 1)
 	{
 		csPort = CS1_GPIO_Port;
 		csPin = CS1_Pin;
@@ -249,7 +249,7 @@ int main(void)
 		HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
 		 if (sdCardPresent != 0)
 		  {
-			 //writeStringToFile(transmitBuffer, transmitLenght);
+			 writeStringToFile(transmitBuffer, transmitLenght);
 		  }
 
 	}
