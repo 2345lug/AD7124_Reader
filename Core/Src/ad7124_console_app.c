@@ -297,7 +297,7 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 	initialized[startPoint] = 1;
 	}
 	// Continuously read the channels, and store sample values
-       	toggle_activity_led();
+
 
 		/*
 		 *  this polls the status register READY/ bit to determine when conversion is done
@@ -389,8 +389,8 @@ static float convertResistance (float inputSample)
   double resistance = 0;
   double temperature = 0;
   resistance = ((inputSample - zero) * referenceResistor) / (zero * gain);
-  temperature = (resistance - 1000) / 0.0385;
-  return (float)resistance;
+  temperature = (resistance - 1000) / 3.85;
+  return (float)temperature;
 }
 
 /*!
