@@ -87,7 +87,8 @@ static uint32_t channel_samples[AD7124_CHANNEL_COUNT] = {0};
 // How many times a given channel is sampled in total for one sample run
 static uint32_t channel_samples_count[AD7124_CHANNEL_COUNT] = {0};
 
-
+static float convertResistance (float inputSample);
+static void toggleChannel(uint8_t lastChannel, struct ad7124_dev * inDev);
 // Public Functions
 
 /*!
@@ -107,11 +108,6 @@ int32_t ad7124_app_initialize(uint8_t configID, struct ad7124_dev * pAd7124_dev,
 		case AD7124_CONFIG_A:
 		{
 			memcpy(ad7124_register_map, ad7124_regs_config_a, sizeof(ad7124_register_map));
-			break;
-		}
-		case AD7124_CONFIG_B:
-		{
-			memcpy(ad7124_register_map, ad7124_regs_config_b, sizeof(ad7124_register_map));
 			break;
 		}
 		default:
@@ -301,12 +297,7 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 	initialized[startPoint] = 1;
 	}
 	// Continuously read the channels, and store sample values
-       	toggle_activity_led();
 
-    	if (display_mode == DISPLAY_DATA_TABULAR) {
-    		adi_clear_console();
-    		printf("Running continuous conversion mode...\r\nPress Escape to stop\r\n\r\n");
-    	}
 
 		/*
 		 *  this polls the status register READY/ bit to determine when conversion is done
@@ -343,26 +334,65 @@ int32_t do_continuous_conversion(uint8_t display_mode, struct ad7124_dev * pAd71
 		}
 		float convertedSample = 0;
 	    float temperatureValue = 0;
+
 		convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
-		*(resultArrayPointer + startPoint + channel_read) = convertedSample;
+		*(resultArrayPointer + startPoint + channel_read) = channel_samples[channel_read];
 
-		//dislay_channel_samples(SHOW_ENABLED_CHANNELS, display_mode);
+		//convertedSample = ad7124_convert_sample_to_voltage(pAd7124_dev, channel_read, channel_samples[channel_read]);
+	    convertedSample = convertResistance(channel_samples[channel_read]);
+	    *(resultArrayPointer + startPoint + channel_read) = convertedSample;
+	    toggleChannel(channel_read, pAd7124_dev);
 
 
-	/*
-    // All done, ADC put into standby mode
-    ad7124_register_map[AD7124_ADC_Control].value &= ~(AD7124_ADC_CTRL_REG_MODE(0xf));
-    // 2 = sleep/standby mode
-    ad7124_register_map[AD7124_ADC_Control].value |= AD7124_ADC_CTRL_REG_MODE(2);
-
-	if ( (error_code = ad7124_write_register(pAd7124_dev, ad7124_register_map[AD7124_ADC_Control]) ) < 0) {
-		printf("Error (%ld) setting AD7124 ADC into standby mode.\r\n", error_code);
-		adi_press_any_key_to_continue();
-	}
-	*/
 	return(MENU_CONTINUE);
 }
 
+static void toggleChannel(uint8_t lastChannel, struct ad7124_dev * inDev)
+{
+	uint32_t error_code = 0;
+
+	if (lastChannel == 0)
+	{
+      ad7124_register_map[AD7124_IOCon1].value = 0b000000000010000010110100;
+	  ad7124_register_map[AD7124_Channel_0].value = 0b0000000001100100;
+	  ad7124_register_map[AD7124_Channel_1].value = 0b1000000011000111;
+	}
+	else
+	{
+      ad7124_register_map[AD7124_IOCon1].value = 0b000000000000010010110100;
+	  ad7124_register_map[AD7124_Channel_0].value = 0b1000000001100100;
+	  ad7124_register_map[AD7124_Channel_1].value = 0b0000000011000111;
+	}
+
+
+	if ( (error_code = ad7124_write_register(inDev, ad7124_register_map[AD7124_IOCon1])) < 0)
+	{
+      printf("Error (%ld) toggle channel.\r\n", error_code);
+	}
+
+	if ( (error_code = ad7124_write_register(inDev, ad7124_register_map[AD7124_Channel_0])) < 0)
+	{
+	  printf("Error (%ld) toggle channel.\r\n", error_code);
+	}
+
+	if ( (error_code = ad7124_write_register(inDev, ad7124_register_map[AD7124_Channel_1])) < 0)
+	{
+	  printf("Error (%ld) toggle channel.\r\n", error_code);
+	}
+}
+
+static float convertResistance (float inputSample)
+{
+  static long zero = 1L << 23;
+  static double referenceResistor = 2.49E3;
+  static double gain = 1;
+  double resistance = 0;
+  double temperature = 0;
+  resistance = ((inputSample - zero) * referenceResistor) / (zero * gain);
+  //temperature = (resistance - 1000) / 3.85;
+  temperature = -1 *((sqrt(-0.00232*resistance + 17.59246) - 3.908) / 0.00116);
+  return (float)temperature;
+}
 
 /*!
  * @brief      Samples all enabled channels and displays in tabular form

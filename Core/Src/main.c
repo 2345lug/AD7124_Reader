@@ -31,6 +31,7 @@
 #include <string.h>
 #include "ad7124_console_app.h"
 #include <rtcProcess.h>
+#include "sdCard.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,6 +41,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+static void dmaInit (void);
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,6 +58,7 @@ SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
 UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
 GPIO_TypeDef* csPort = CS1_GPIO_Port;
@@ -74,7 +77,9 @@ static void MX_I2C2_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -116,12 +121,14 @@ int main(void)
   MX_RTC_Init();
   MX_SPI1_Init();
   MX_SPI2_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
+
   if (MX_FATFS_Init() != APP_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN 2 */
-
+  sdCardInit();
   printTimeUart();
   rtcConsoleInput();
 
@@ -162,11 +169,16 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t startTicks = 0;
+  uint32_t prevTicks = 0;
+  static uint8_t transmitBuffer[255] = { 0 };
+  static uint8_t timeBuffer[17] = { 0 };
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
 	csPort = CS1_GPIO_Port;
 	csPin = CS1_Pin;
 	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
@@ -177,11 +189,29 @@ int main(void)
 	csPin = CS3_Pin;
 	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 
-	for (int i = 0; i < 6; i++)
+	csPort = CS1_GPIO_Port;
+	csPin = CS1_Pin;
+	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
+	csPort = CS2_GPIO_Port;
+	csPin = CS2_Pin;
+	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
+	csPort = CS3_GPIO_Port;
+	csPin = CS3_Pin;
+	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
+
+	startTicks = HAL_GetTick();
+	//sprintf(transmitBuffer,"%0d \t", (startTicks - prevTicks));
+	printTimeString (transmitBuffer);
+	for (int i = 0; i < CHANNEL_COUNT; i++)
 	{
-	  printf("%.6f \t", convertedVoltage[i]);
+	  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%03.1f\t", convertedVoltage[i]);
 	}
-	printf ("\r\n");
+	sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
+	uint8_t transmitLenght = TX_LENGHT;
+	HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
+
+	prevTicks = HAL_GetTick();
+
   }
   /* USER CODE END 3 */
 }
@@ -300,7 +330,8 @@ static void MX_RTC_Init(void)
 
   /* USER CODE END RTC_Init 0 */
 
-
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
 
   /* USER CODE BEGIN RTC_Init 1 */
 
@@ -327,7 +358,6 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-
 
   /* USER CODE BEGIN RTC_Init 2 */
 
@@ -358,7 +388,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
   hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -394,11 +424,11 @@ static void MX_SPI2_Init(void)
   hspi2.Instance = SPI2;
   hspi2.Init.Mode = SPI_MODE_MASTER;
   hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi2.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -464,6 +494,22 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -501,7 +547,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = SD_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(SD_CS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BUTTON_Pin SD_DETECT_Pin */
@@ -541,7 +587,10 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void dmaInit (void)
+{
 
+}
 /* USER CODE END 4 */
 
 /**

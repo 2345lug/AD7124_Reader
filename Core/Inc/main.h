@@ -83,7 +83,11 @@ void Error_Handler(void);
 #define TRIG_5V_Pin GPIO_PIN_8
 #define TRIG_5V_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+#define SD_SPI_HANDLE hspi2
+#define CHANNEL_COUNT 6
+#define TEMPERATURE_SYMBOLS_COUNT 6
+#define TIMESTAMP_SHIFT 24
+#define TX_LENGHT (TEMPERATURE_SYMBOLS_COUNT * CHANNEL_COUNT) + TIMESTAMP_SHIFT + 2
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
