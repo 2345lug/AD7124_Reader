@@ -67,7 +67,8 @@ float convertedVoltage[10] = { 0 };
 struct ad7124_dev * pAd7124_dev1 = NULL;
 struct ad7124_dev * pAd7124_dev2 = NULL;
 struct ad7124_dev * pAd7124_dev3 = NULL;
-
+volatile uint8_t cycleStart = 0;
+extern volatile uint32_t previousTicks; //Declared at buttons.c
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,11 +78,10 @@ static void MX_I2C2_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
-static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
-
+static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void MX_DMA_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -123,10 +123,12 @@ int main(void)
   MX_SPI2_Init();
   MX_DMA_Init();
   MX_USART1_UART_Init();
-
   if (MX_FATFS_Init() != APP_OK) {
     Error_Handler();
   }
+
+  /* Initialize interrupts */
+  MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
   sdCardInit();
   printTimeUart();
@@ -164,7 +166,7 @@ int main(void)
 		pAd7124_dev3 = resultPointer;
 	}
 	eCnt++;
-	printf("Sucessfully booted \r\n");
+	printf("Sucessfully booted. Waiting for trigger \r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -173,45 +175,49 @@ int main(void)
   uint32_t prevTicks = 0;
   static uint8_t transmitBuffer[255] = { 0 };
   static uint8_t timeBuffer[17] = { 0 };
+  uint32_t overallTicks = 0;
   while (1)
   {
+	buttonMonitor();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-	csPort = CS1_GPIO_Port;
-	csPin = CS1_Pin;
-	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
-	csPort = CS2_GPIO_Port;
-	csPin = CS2_Pin;
-	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
-	csPort = CS3_GPIO_Port;
-	csPin = CS3_Pin;
-	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
-
-	csPort = CS1_GPIO_Port;
-	csPin = CS1_Pin;
-	do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
-	csPort = CS2_GPIO_Port;
-	csPin = CS2_Pin;
-	do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
-	csPort = CS3_GPIO_Port;
-	csPin = CS3_Pin;
-	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
-
-	startTicks = HAL_GetTick();
-	//sprintf(transmitBuffer,"%0d \t", (startTicks - prevTicks));
-	printTimeString (transmitBuffer);
-	for (int i = 0; i < CHANNEL_COUNT; i++)
+	if (cycleStart == 1)
 	{
-	  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%03.1f\t", convertedVoltage[i]);
+		csPort = CS1_GPIO_Port;
+		csPin = CS1_Pin;
+		do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
+		csPort = CS2_GPIO_Port;
+		csPin = CS2_Pin;
+		do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
+		csPort = CS3_GPIO_Port;
+		csPin = CS3_Pin;
+		do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
+
+		csPort = CS1_GPIO_Port;
+		csPin = CS1_Pin;
+		do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
+		csPort = CS2_GPIO_Port;
+		csPin = CS2_Pin;
+		do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
+		csPort = CS3_GPIO_Port;
+		csPin = CS3_Pin;
+		do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
+
+		startTicks = HAL_GetTick();
+
+		overallTicks = startTicks - previousTicks;
+		sprintf(transmitBuffer,"%05d \t", overallTicks);
+		for (int i = 0; i < CHANNEL_COUNT; i++)
+		{
+		  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%03.1f\t", convertedVoltage[i]);
+		}
+		sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
+		uint8_t transmitLenght = TX_LENGHT;
+		HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
+
+		prevTicks = HAL_GetTick();
 	}
-	sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
-	uint8_t transmitLenght = TX_LENGHT;
-	HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
-
-	prevTicks = HAL_GetTick();
-
   }
   /* USER CODE END 3 */
 }
@@ -270,6 +276,17 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief NVIC Configuration.
+  * @retval None
+  */
+static void MX_NVIC_Init(void)
+{
+  /* EXTI4_15_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 }
 
 /**
@@ -493,9 +510,6 @@ static void MX_USART1_UART_Init(void)
 
 }
 
-/**
-  * Enable DMA controller clock
-  */
 static void MX_DMA_Init(void)
 {
 
@@ -550,9 +564,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(SD_CS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BUTTON_Pin SD_DETECT_Pin */
-  GPIO_InitStruct.Pin = BUTTON_Pin|SD_DETECT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : PA5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -564,6 +578,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SD_DETECT_Pin */
+  GPIO_InitStruct.Pin = SD_DETECT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(SD_DETECT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : AD_SYNC_Pin */
   GPIO_InitStruct.Pin = AD_SYNC_Pin;
@@ -578,11 +598,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(PowerMonitor_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : TRIG_5V_Pin */
-  GPIO_InitStruct.Pin = TRIG_5V_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(TRIG_5V_GPIO_Port, &GPIO_InitStruct);
+  /*Configure GPIO pin : PB8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 

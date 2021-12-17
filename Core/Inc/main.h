@@ -62,8 +62,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SD_CS_Pin GPIO_PIN_2
 #define SD_CS_GPIO_Port GPIOA
-#define BUTTON_Pin GPIO_PIN_5
-#define BUTTON_GPIO_Port GPIOA
 #define CS1_Pin GPIO_PIN_0
 #define CS1_GPIO_Port GPIOB
 #define CS2_Pin GPIO_PIN_1
@@ -80,13 +78,11 @@ void Error_Handler(void);
 #define CS4_GPIO_Port GPIOB
 #define CS5_Pin GPIO_PIN_5
 #define CS5_GPIO_Port GPIOB
-#define TRIG_5V_Pin GPIO_PIN_8
-#define TRIG_5V_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 #define SD_SPI_HANDLE hspi2
 #define CHANNEL_COUNT 6
 #define TEMPERATURE_SYMBOLS_COUNT 6
-#define TIMESTAMP_SHIFT 24
+#define TIMESTAMP_SHIFT 6
 #define TX_LENGHT (TEMPERATURE_SYMBOLS_COUNT * CHANNEL_COUNT) + TIMESTAMP_SHIFT + 2
 /* USER CODE END Private defines */
 
