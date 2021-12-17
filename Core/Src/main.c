@@ -208,7 +208,6 @@ int main(void)
 
 		overallTicks = startTicks - previousTicks;
 		sprintf(transmitBuffer,"%05d \t", overallTicks);
-		printTimeString (transmitBuffer);
 		for (int i = 0; i < CHANNEL_COUNT; i++)
 		{
 		  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%03.1f\t", convertedVoltage[i]);
