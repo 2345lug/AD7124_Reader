@@ -389,7 +389,8 @@ static float convertResistance (float inputSample)
   double resistance = 0;
   double temperature = 0;
   resistance = ((inputSample - zero) * referenceResistor) / (zero * gain);
-  temperature = (resistance - 1000) / 3.85;
+  //temperature = (resistance - 1000) / 3.85;
+  temperature = -1 *((sqrt(-0.00232*resistance + 17.59246) - 3.908) / 0.00116);
   return (float)temperature;
 }
 

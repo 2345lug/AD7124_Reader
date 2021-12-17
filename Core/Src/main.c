@@ -203,9 +203,9 @@ int main(void)
 
 	for (int i = 0; i < CHANNEL_COUNT; i++)
 	{
-	  sprintf((transmitBuffer+ 3 + i*TEMPERATURE_SYMBOLS_COUNT),"%3.1f\t", convertedVoltage[i]);
+	  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%3.1f\t", convertedVoltage[i]);
 	}
-	sprintf ((transmitBuffer+ 3 + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
+	sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
 	uint8_t transmitLenght = strlen(transmitBuffer);
 	HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
 
