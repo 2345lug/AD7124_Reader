@@ -85,7 +85,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 #define SD_SPI_HANDLE hspi2
 #define CHANNEL_COUNT 6
-#define TEMPERATURE_SYMBOLS_COUNT 6
+#define TEMPERATURE_SYMBOLS_COUNT 7
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

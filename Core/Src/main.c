@@ -41,6 +41,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+static void dmaInit (void);
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -76,8 +77,9 @@ static void MX_I2C2_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
-static void MX_USART1_UART_Init(void);
 static void MX_DMA_Init(void);
+static void MX_USART1_UART_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -119,8 +121,9 @@ int main(void)
   MX_RTC_Init();
   MX_SPI1_Init();
   MX_SPI2_Init();
-  MX_USART1_UART_Init();
   MX_DMA_Init();
+  MX_USART1_UART_Init();
+
   if (MX_FATFS_Init() != APP_OK) {
     Error_Handler();
   }
@@ -203,7 +206,8 @@ int main(void)
 	  sprintf((transmitBuffer+ 3 + i*TEMPERATURE_SYMBOLS_COUNT),"%3.1f\t", convertedVoltage[i]);
 	}
 	sprintf ((transmitBuffer+ 3 + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
-	HAL_UART_Transmit_DMA(&huart1, transmitBuffer, strlen(transmitBuffer));
+	uint8_t transmitLenght = strlen(transmitBuffer);
+	HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
 
 
 	prevTicks = HAL_GetTick();
@@ -583,7 +587,10 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void dmaInit (void)
+{
 
+}
 /* USER CODE END 4 */
 
 /**
