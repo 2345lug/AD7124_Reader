@@ -4,7 +4,7 @@
 extern volatile uint8_t cycleStart;
 volatile uint8_t pressDetected = 0;
 
-static volatile uint32_t previousTicks = 0;
+volatile uint32_t previousTicks = 0;
 static volatile uint32_t currentTicks = 0;
 
 void buttonMonitor(void)

@@ -68,6 +68,7 @@ struct ad7124_dev * pAd7124_dev1 = NULL;
 struct ad7124_dev * pAd7124_dev2 = NULL;
 struct ad7124_dev * pAd7124_dev3 = NULL;
 volatile uint8_t cycleStart = 0;
+extern volatile uint32_t previousTicks; //Declared at buttons.c
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -174,6 +175,7 @@ int main(void)
   uint32_t prevTicks = 0;
   static uint8_t transmitBuffer[255] = { 0 };
   static uint8_t timeBuffer[17] = { 0 };
+  uint32_t overallTicks = 0;
   while (1)
   {
 	buttonMonitor();
@@ -203,7 +205,9 @@ int main(void)
 		do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 
 		startTicks = HAL_GetTick();
-		//sprintf(transmitBuffer,"%0d \t", (startTicks - prevTicks));
+
+		overallTicks = startTicks - previousTicks;
+		sprintf(transmitBuffer,"%05d \t", overallTicks);
 		printTimeString (transmitBuffer);
 		for (int i = 0; i < CHANNEL_COUNT; i++)
 		{
