@@ -25,7 +25,7 @@ void buttonMonitor(void)
   pressDetected = 0;
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t pinNumber)
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t pinNumber)
 {
 
   currentTicks = HAL_GetTick();
@@ -38,3 +38,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t pinNumber)
 
 }
 
+void HAL_GPIO_EXTI_Falling_Callback(uint16_t pinNumber)
+{
+
+  currentTicks = HAL_GetTick();
+  uint32_t tickInterval = currentTicks - previousTicks;
+  if (tickInterval > 100)
+  {
+	  pressDetected = 1;
+	  previousTicks = HAL_GetTick();
+  }
+
+}
