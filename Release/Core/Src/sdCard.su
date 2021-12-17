@@ -1,0 +1,4 @@
+sdCard.c:15:6:fileCreate	32	static
+sdCard.c:22:6:writeStringToFile	16	static
+sdCard.c:29:6:fileClose	8	static
+sdCard.c:34:6:sdCardInit	24	static
