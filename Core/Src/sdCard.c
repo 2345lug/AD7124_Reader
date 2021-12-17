@@ -5,13 +5,35 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include "platform_support.h"
+#include <rtcProcess.h>
 
+FATFS FatFs; 	//Fatfs handle
+FIL fil = { 0 }; 		//File handle
+FRESULT fres; //Result after operations
+int8_t initState = 0;
+
+void fileCreate(void)
+{
+  uint8_t fileName[23] = { 0 };
+  printFilenameString(fileName);
+  f_open(&fil, fileName, FA_CREATE_ALWAYS | FA_WRITE);
+}
+
+void writeString(uint8_t* inputString, uint8_t bytesToWrite)
+{
+  uint8_t bytesWritten;
+
+  f_write(&fil, inputString, bytesToWrite, &bytesWritten);
+}
+
+void fileClose(void)
+{
+  f_close(&fil);
+}
 
 void sdCardInit (void)
 {
-  FATFS FatFs; 	//Fatfs handle
-  FIL fil; 		//File handle
-  FRESULT fres; //Result after operations
+
 
   //Open the file system
   HAL_Delay(1000);
@@ -19,7 +41,7 @@ void sdCardInit (void)
   if (fres != FR_OK)
   {
    printf("f_mount error (%i)\r\n", fres);
-		while(1);
+		//while(1);
   }
 
   //Let's get some statistics from the SD card
@@ -30,7 +52,7 @@ void sdCardInit (void)
     fres = f_getfree("", &free_clusters, &getFreeFs);
     if (fres != FR_OK) {
   	printf("f_getfree error (%i)\r\n", fres);
-  	while(1);
+  	//while(1);
     }
 
     //Formula comes from ChaN's documentation

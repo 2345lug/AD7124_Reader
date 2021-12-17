@@ -1,5 +1,6 @@
 #include <buttons.h>
 #include <stdio.h>
+#include <sdCard.h>
 
 extern volatile uint8_t cycleStart;
 volatile uint8_t pressDetected = 0;
@@ -14,6 +15,7 @@ void buttonMonitor(void)
     if (cycleStart == 0)
     {
       printf ("Trigger detected. Start cycle \r\n");
+      fileCreate();
       cycleStart = 1;
     }
     else
