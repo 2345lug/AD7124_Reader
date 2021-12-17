@@ -107,16 +107,16 @@ void rtcConsoleInput(void)
             	}
               }
               inputCharCount++;
-
+              printf ("Got values %s \r\n", inputChars);
+              parseInputTime(inputChars);
+              parseInputDate(inputChars);
+              printTimeUart();
 			}
 			break;
 
 		}
 	}
-	printf ("Got values %s \r\n", inputChars);
-	parseInputTime(inputChars);
-	parseInputDate(inputChars);
-	printTimeUart();
+
 	return 0;
 }
 
