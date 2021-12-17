@@ -172,6 +172,7 @@ int main(void)
   uint32_t startTicks = 0;
   uint32_t prevTicks = 0;
   static uint8_t transmitBuffer[255] = { 0 };
+  static uint8_t timeBuffer[17] = { 0 };
   while (1)
   {
     /* USER CODE END WHILE */
@@ -199,16 +200,15 @@ int main(void)
 	do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 
 	startTicks = HAL_GetTick();
-	sprintf(transmitBuffer,"%d \t", (startTicks - prevTicks));
-
+	//sprintf(transmitBuffer,"%0d \t", (startTicks - prevTicks));
+	printTimeString (transmitBuffer);
 	for (int i = 0; i < CHANNEL_COUNT; i++)
 	{
-	  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%3.1f\t", convertedVoltage[i]);
+	  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%03.1f\t", convertedVoltage[i]);
 	}
 	sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
-	uint8_t transmitLenght = strlen(transmitBuffer);
+	uint8_t transmitLenght = TX_LENGHT;
 	HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
-
 
 	prevTicks = HAL_GetTick();
 

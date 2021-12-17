@@ -13,5 +13,6 @@
 
 void rtcConsoleInput(void);
 void printTimeUart(void);
+void printTimeString(uint8_t* resultStringPointer);
 
 #endif /* INC_RTCPROCESS_H_ */

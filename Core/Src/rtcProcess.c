@@ -30,6 +30,17 @@ void printTimeUart(void)
 
 }
 
+void printTimeString(uint8_t* resultStringPointer)
+{
+	RTC_TimeTypeDef sTime = {0};
+	RTC_DateTypeDef sDate = {0};
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN); // RTC_FORMAT_BIN , RTC_FORMAT_BIN
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+
+	sprintf(resultStringPointer ,"%02d:%02d:%02d:%03d_%02d-%02d-%02d\t", sTime.Hours, sTime.Minutes, sTime.Seconds,255 - sTime.SubSeconds, sDate.Date, sDate.Month, sDate.Year);
+
+}
+
 void rtcConsoleInput(void)
 {
 
@@ -117,7 +128,7 @@ static void parseInputTime (uint8_t* inputString)
 //hh:mm_dd-MM-yy_D
 static void parseInputDate (uint8_t* inputString)
 {
-  uint8_t dateArray[3] = { 0 } ;
+  uint8_t dateArray[4] = { 0 } ;
   *(dateArray + 0) = (*(inputString + 6) - 48) * 10 + (*(inputString + 7) - 48);
   *(dateArray + 1) = (*(inputString + 9) - 48) * 10 + (*(inputString + 10) - 48);
   *(dateArray + 2) = (*(inputString + 12) - 48) * 10 + (*(inputString + 13) - 48);
