@@ -34,10 +34,13 @@ void printTimeString(uint8_t* resultStringPointer)
 {
 	RTC_TimeTypeDef sTime = {0};
 	RTC_DateTypeDef sDate = {0};
+	static uint32_t currentTicks = 0;
+	currentTicks = HAL_GetTick();
+	currentTicks = currentTicks % 1000;
 	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN); // RTC_FORMAT_BIN , RTC_FORMAT_BIN
 	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
-	sprintf(resultStringPointer ,"%02d:%02d:%02d:%03d_%02d-%02d-%02d\t", sTime.Hours, sTime.Minutes, sTime.Seconds,255 - sTime.SubSeconds, sDate.Date, sDate.Month, sDate.Year);
+	sprintf(resultStringPointer ,"%02d:%02d:%02d:%03d_%02d-%02d-%02d\t", sTime.Hours, sTime.Minutes, sTime.Seconds, currentTicks, sDate.Date, sDate.Month, sDate.Year);
 
 }
 
