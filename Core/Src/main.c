@@ -63,7 +63,7 @@ DMA_HandleTypeDef hdma_usart1_tx;
 /* USER CODE BEGIN PV */
 GPIO_TypeDef* csPort = CS1_GPIO_Port;
 uint8_t csPin = CS1_Pin;
-float convertedVoltage[10] = { 0 };
+static float convertedVoltage[10] = { 0 };
 uint8_t sdCardPresent = 0;
 struct ad7124_dev * pAd7124_dev1 = NULL;
 
@@ -211,10 +211,12 @@ int main(void)
 	  sdCardPresent = HAL_GPIO_ReadPin(SD_DETECT_GPIO_Port, SD_DETECT_Pin);
 	  }
 	  buttonMonitor();
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	if (cycleStart == 1)
+	if (cycleStart == 0)
 	{
 		csPort = CS1_GPIO_Port;
 		csPin = CS1_Pin;
@@ -237,17 +239,17 @@ int main(void)
 		startTicks = HAL_GetTick();
 
 		overallTicks = startTicks - previousTicks;
-		sprintf(transmitBuffer,"%05d\t", overallTicks);
+		sprintf(transmitBuffer,"%05d;", overallTicks);
 		for (int i = 0; i < CHANNEL_COUNT; i++)
 		{
-		  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%04.1f\t", convertedVoltage[i]);
+		  sprintf((transmitBuffer+ TIMESTAMP_SHIFT + i*TEMPERATURE_SYMBOLS_COUNT),"%05.1f;", convertedVoltage[i]);
 		}
 		sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
 		uint8_t transmitLenght = TX_LENGHT;
 		HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
 		 if (sdCardPresent != 0)
 		  {
-			 writeStringToFile(transmitBuffer, transmitLenght);
+			 //writeStringToFile(transmitBuffer, transmitLenght);
 		  }
 
 	}
@@ -508,7 +510,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 230400;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
