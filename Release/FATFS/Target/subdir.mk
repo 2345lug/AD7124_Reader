@@ -21,3 +21,10 @@ C_DEPS += \
 FATFS/Target/%.o: ../FATFS/Target/%.c FATFS/Target/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m0plus -std=gnu11 -DSTM32G071xx -DUSE_HAL_DRIVER -c -I../Drivers/CMSIS/Include -I../Core/Inc -I../Drivers/STM32G0xx_HAL_Driver/Inc -I../Drivers/CMSIS/Device/ST/STM32G0xx/Include -I../Drivers/STM32G0xx_HAL_Driver/Inc/Legacy -I../FATFS/Target -I../FATFS/App -I../Middlewares/Third_Party/FatFs/src -Os -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 
+clean: clean-FATFS-2f-Target
+
+clean-FATFS-2f-Target:
+	-$(RM) ./FATFS/Target/user_diskio.d ./FATFS/Target/user_diskio.o ./FATFS/Target/user_diskio_spi.d ./FATFS/Target/user_diskio_spi.o
+
+.PHONY: clean-FATFS-2f-Target
+

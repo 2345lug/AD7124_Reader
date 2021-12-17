@@ -55,7 +55,7 @@ void printFilenameString(uint8_t* resultStringPointer)
 	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN); // RTC_FORMAT_BIN , RTC_FORMAT_BIN
 	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
-	sprintf(resultStringPointer ,"%02d:%02d:%02d_%02d-%02d-%02d.txt\0", sTime.Hours, sTime.Minutes, sTime.Seconds, sDate.Date, sDate.Month, sDate.Year);
+	sprintf(resultStringPointer ,"%02d%02d%02d%02d", sTime.Hours, sTime.Minutes, sTime.Seconds, sDate.Date);
 
 }
 

@@ -64,6 +64,7 @@ DMA_HandleTypeDef hdma_usart1_tx;
 GPIO_TypeDef* csPort = CS1_GPIO_Port;
 uint8_t csPin = CS1_Pin;
 float convertedVoltage[10] = { 0 };
+uint8_t sdCardPresent = 0;
 struct ad7124_dev * pAd7124_dev1 = NULL;
 
 struct ad7124_dev * pAd7124_dev2 = NULL;
@@ -134,7 +135,12 @@ int main(void)
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
-  sdCardInit();
+  sdCardPresent = HAL_GPIO_ReadPin(SD_DETECT_GPIO_Port, SD_DETECT_Pin);
+
+  if (sdCardPresent != 0)
+  {
+	  sdCardInit();
+  }
   printTimeUart();
   rtcConsoleInput();
 
@@ -142,6 +148,7 @@ int main(void)
 	int32_t setupResult;
 	uint32_t resultPointer;
 	uint8_t eCnt = 0;
+
 
 
 	csPort = CS1_GPIO_Port;
@@ -198,9 +205,14 @@ int main(void)
   uint32_t prevTicks = 0;
   static uint8_t transmitBuffer[255] = { 0 };
   uint32_t overallTicks = 0;
+
   while (1)
   {
-	buttonMonitor();
+	  if (sdCardPresent != 0)
+	  {
+	  sdCardPresent = HAL_GPIO_ReadPin(SD_DETECT_GPIO_Port, SD_DETECT_Pin);
+	  }
+	  buttonMonitor();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -235,7 +247,11 @@ int main(void)
 		sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
 		uint8_t transmitLenght = TX_LENGHT;
 		HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
-		writeStringToFile(transmitBuffer, transmitLenght);
+		 if (sdCardPresent != 0)
+		  {
+			 writeStringToFile(transmitBuffer, transmitLenght);
+		  }
+
 	}
   }
   /* USER CODE END 3 */

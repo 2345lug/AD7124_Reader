@@ -3,6 +3,7 @@
 #include <sdCard.h>
 
 extern volatile uint8_t cycleStart;
+extern uint8_t sdCardPresent;
 volatile uint8_t pressDetected = 0;
 
 volatile uint32_t previousTicks = 0;
@@ -15,13 +16,20 @@ void buttonMonitor(void)
     if (cycleStart == 0)
     {
       printf ("Trigger detected. Start cycle \r\n");
-      fileCreate();
+      if (sdCardPresent != 0)
+      {
+        fileCreate();
+      }
       cycleStart = 1;
     }
     else
     {
       printf ("Trigger detected. Stop cycle \r\n");
       cycleStart = 0;
+      if (sdCardPresent != 0)
+      {
+        fileClose();
+      }
     }
   }
   pressDetected = 0;

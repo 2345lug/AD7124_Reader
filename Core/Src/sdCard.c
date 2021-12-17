@@ -14,16 +14,24 @@ int8_t initState = 0;
 
 void fileCreate(void)
 {
-  uint8_t fileName[23] = { 0 };
+  uint8_t fileName[16] = { 0 };
   printFilenameString(fileName);
-  f_open(&fil, fileName, FA_CREATE_ALWAYS | FA_WRITE);
+  //f_chdrive(0);
+  //f_chdir("0:..");
+  FRESULT fOpenResult = 0;
+  //fOpenResult = f_open(&fil, (TCHAR*)fileName, FA_CREATE_ALWAYS | FA_WRITE);
+  fOpenResult = f_open(&fil, (TCHAR*)fileName, FA_CREATE_ALWAYS | FA_WRITE);
+  printf("\%d \r\n", fOpenResult);
+  fOpenResult++;
 }
 
 void writeStringToFile(uint8_t* inputString, uint8_t bytesToWrite)
 {
   uint8_t bytesWritten;
-
-  f_write(&fil, inputString, bytesToWrite, &bytesWritten);
+  uint8_t writeBuffer[128] = { 0 };
+  memcpy(writeBuffer,inputString,bytesToWrite);
+  f_printf(&fil, "%s", writeBuffer);
+  //f_write(&fil, inputString, bytesToWrite, &bytesWritten);
 }
 
 void fileClose(void)
@@ -37,6 +45,7 @@ void sdCardInit (void)
 
   //Open the file system
   HAL_Delay(1000);
+
   fres = f_mount(&FatFs, "", 1); //1=mount now
   if (fres != FR_OK)
   {
