@@ -75,9 +75,12 @@ void rtcConsoleInput(void)
 		  currentTicks = HAL_GetTick();
 		}
 
+ if (inputStatus == 1 && (currentTicks - startTicks) >= 10000 )
+ {
+    return;
+ }
 
-
-	while (inputStatus > 1 && inputCharCount < INPUT_TIME_STRING_SIZE)
+	while (inputStatus == 2 && inputCharCount < INPUT_TIME_STRING_SIZE)
 	{
 		switch(inputStatus)
 		{
@@ -114,21 +117,22 @@ void rtcConsoleInput(void)
               inputCharCount++;
 
 			}
-			inputStatus = 3;
+
 			break;
 
 		}
 	}
 
-	}
+
 	if (inputCharCount == INPUT_TIME_STRING_SIZE)
 	{
 		printf ("Got values %s \r\n", inputChars);
 		parseInputTime(inputChars);
 		parseInputDate(inputChars);
 		printTimeUart();
+		inputStatus = 3;
 	}
-
+	}
 	return 0;
 }
 
@@ -154,8 +158,8 @@ static void parseInputDate (uint8_t* inputString)
 static void errorKeyEntered (void)
 {
   printf ("Error key enetered! \r\n");
+  printf("Input date time in next format: hh:mm_dd-MM-yy_D, where D is number of day of the week (1 - Monday) or s for skip \r\n");
   startTicks = HAL_GetTick();
-  inputStatus = 1;
   inputCharCount = 0;
 }
 
