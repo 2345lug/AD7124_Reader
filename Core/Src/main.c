@@ -78,6 +78,7 @@ static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -123,6 +124,9 @@ int main(void)
   if (MX_FATFS_Init() != APP_OK) {
     Error_Handler();
   }
+
+  /* Initialize interrupts */
+  MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
   sdCardInit();
   printTimeUart();
@@ -171,9 +175,6 @@ int main(void)
   static uint8_t timeBuffer[17] = { 0 };
   while (1)
   {
-	uint32_t buttonState = 0;
-	buttonState = HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5);
-	printf("%d \r\n", buttonState);
 	buttonMonitor();
     /* USER CODE END WHILE */
 
@@ -274,6 +275,17 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief NVIC Configuration.
+  * @retval None
+  */
+static void MX_NVIC_Init(void)
+{
+  /* EXTI4_15_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+}
+
+/**
   * @brief I2C2 Initialization Function
   * @param None
   * @retval None
@@ -358,6 +370,7 @@ static void MX_RTC_Init(void)
   /* USER CODE END Check_RTC_BKUP */
 
   /** Initialize RTC and set the Time and Date
+  */
 
   /* USER CODE BEGIN RTC_Init 2 */
 
@@ -573,10 +586,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 }
 
