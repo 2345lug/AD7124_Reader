@@ -67,7 +67,7 @@ float convertedVoltage[10] = { 0 };
 struct ad7124_dev * pAd7124_dev1 = NULL;
 struct ad7124_dev * pAd7124_dev2 = NULL;
 struct ad7124_dev * pAd7124_dev3 = NULL;
-
+volatile uint8_t cycleStart = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -171,6 +171,9 @@ int main(void)
   static uint8_t timeBuffer[17] = { 0 };
   while (1)
   {
+	uint32_t buttonState = 0;
+	buttonState = HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5);
+	printf("%d \r\n", buttonState);
 	buttonMonitor();
     /* USER CODE END WHILE */
 

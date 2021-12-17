@@ -34,7 +34,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t pinNumber)
   {
 	  pressDetected = 1;
 	  previousTicks = HAL_GetTick();
-
   }
 
 }
