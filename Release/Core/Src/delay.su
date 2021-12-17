@@ -1,0 +1,2 @@
+delay.c:57:6:udelay	0	static
+delay.c:69:6:mdelay	8	static

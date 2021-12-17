@@ -30,6 +30,7 @@ void printTimeUart(void)
 
 }
 
+/*
 void printTimeString(uint8_t* resultStringPointer)
 {
 	RTC_TimeTypeDef sTime = {0};
@@ -43,7 +44,7 @@ void printTimeString(uint8_t* resultStringPointer)
 	sprintf(resultStringPointer ,"%02d:%02d:%02d:%03d_%02d-%02d-%02d\t", sTime.Hours, sTime.Minutes, sTime.Seconds, currentTicks, sDate.Date, sDate.Month, sDate.Year);
 
 }
-
+*/
 void printFilenameString(uint8_t* resultStringPointer)
 {
 	RTC_TimeTypeDef sTime = {0};

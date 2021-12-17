@@ -1,0 +1,4 @@
+rtcProcess.c:173:13:errorKeyEntered	8	static
+rtcProcess.c:22:6:printTimeUart	64	static
+rtcProcess.c:48:6:printFilenameString	72	static
+rtcProcess.c:62:6:rtcConsoleInput	56	static

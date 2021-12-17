@@ -65,8 +65,12 @@ GPIO_TypeDef* csPort = CS1_GPIO_Port;
 uint8_t csPin = CS1_Pin;
 float convertedVoltage[10] = { 0 };
 struct ad7124_dev * pAd7124_dev1 = NULL;
+
 struct ad7124_dev * pAd7124_dev2 = NULL;
 struct ad7124_dev * pAd7124_dev3 = NULL;
+struct ad7124_dev * pAd7124_dev4 = NULL;
+struct ad7124_dev * pAd7124_dev5 = NULL;
+
 volatile uint8_t cycleStart = 0;
 extern volatile uint32_t previousTicks; //Declared at buttons.c
 /* USER CODE END PV */
@@ -139,6 +143,7 @@ int main(void)
 	uint32_t resultPointer;
 	uint8_t eCnt = 0;
 
+
 	csPort = CS1_GPIO_Port;
 	csPin = CS1_Pin;
 	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev1, (uint8_t)CS1_GPIO_Port, (uint8_t)CS1_Pin, &resultPointer )) < 0 ) {
@@ -147,7 +152,7 @@ int main(void)
 	{
 		pAd7124_dev1 = resultPointer;
 	}
-	eCnt++;
+
 	csPort = CS2_GPIO_Port;
 	csPin = CS2_Pin;
 		if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev2, (uint8_t)CS2_GPIO_Port, (uint8_t)CS2_Pin, &resultPointer )) < 0 ) {
@@ -156,7 +161,7 @@ int main(void)
 		{
 			pAd7124_dev2 = resultPointer;
 		}
-		eCnt++;
+
 	csPort = CS3_GPIO_Port;
 	csPin = CS3_Pin;
 	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev3, (uint8_t)CS3_GPIO_Port, (uint8_t)CS3_Pin, &resultPointer )) < 0 ) {
@@ -165,7 +170,25 @@ int main(void)
 	{
 		pAd7124_dev3 = resultPointer;
 	}
-	eCnt++;
+
+	csPort = CS4_GPIO_Port;
+	csPin = CS4_Pin;
+	if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev4, (uint8_t)CS4_GPIO_Port, (uint8_t)CS4_Pin, &resultPointer )) < 0 ) {
+	}
+	else
+	{
+		pAd7124_dev4 = resultPointer;
+	}
+	csPort = CS5_GPIO_Port;
+		csPin = CS5_Pin;
+		if ((setupResult = ad7124_app_initialize(AD7124_CONFIG_A, &pAd7124_dev5, (uint8_t)CS5_GPIO_Port, (uint8_t)CS5_Pin, &resultPointer )) < 0 ) {
+		}
+		else
+		{
+			pAd7124_dev5 = resultPointer;
+		}
+		/*
+	*/
 	printf("Sucessfully booted. Waiting for trigger \r\n");
   /* USER CODE END 2 */
 
@@ -174,7 +197,6 @@ int main(void)
   uint32_t startTicks = 0;
   uint32_t prevTicks = 0;
   static uint8_t transmitBuffer[255] = { 0 };
-  static uint8_t timeBuffer[17] = { 0 };
   uint32_t overallTicks = 0;
   while (1)
   {
@@ -187,6 +209,7 @@ int main(void)
 		csPort = CS1_GPIO_Port;
 		csPin = CS1_Pin;
 		do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
+
 		csPort = CS2_GPIO_Port;
 		csPin = CS2_Pin;
 		do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
@@ -194,15 +217,12 @@ int main(void)
 		csPin = CS3_Pin;
 		do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
 
-		csPort = CS1_GPIO_Port;
-		csPin = CS1_Pin;
-		do_continuous_conversion(1, pAd7124_dev1, &convertedVoltage, 0);
-		csPort = CS2_GPIO_Port;
-		csPin = CS2_Pin;
-		do_continuous_conversion(1, pAd7124_dev2, &convertedVoltage, 2);
-		csPort = CS3_GPIO_Port;
-		csPin = CS3_Pin;
-		do_continuous_conversion(1, pAd7124_dev3, &convertedVoltage, 4);
+		csPort = CS4_GPIO_Port;
+		csPin = CS4_Pin;
+		do_continuous_conversion(1, pAd7124_dev4, &convertedVoltage, 6);
+		csPort = CS5_GPIO_Port;
+		csPin = CS5_Pin;
+		do_continuous_conversion(1, pAd7124_dev5, &convertedVoltage, 8);
 
 		startTicks = HAL_GetTick();
 
@@ -215,8 +235,7 @@ int main(void)
 		sprintf ((transmitBuffer+ TIMESTAMP_SHIFT + CHANNEL_COUNT*TEMPERATURE_SYMBOLS_COUNT), "\r\n", 0);
 		uint8_t transmitLenght = TX_LENGHT;
 		HAL_UART_Transmit_DMA(&huart1, transmitBuffer, transmitLenght);
-
-		prevTicks = HAL_GetTick();
+		writeStringToFile(transmitBuffer, transmitLenght);
 	}
   }
   /* USER CODE END 3 */
@@ -346,9 +365,6 @@ static void MX_RTC_Init(void)
   /* USER CODE BEGIN RTC_Init 0 */
 
   /* USER CODE END RTC_Init 0 */
-
-  RTC_TimeTypeDef sTime = {0};
-  RTC_DateTypeDef sDate = {0};
 
   /* USER CODE BEGIN RTC_Init 1 */
 
@@ -607,10 +623,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static void dmaInit (void)
-{
 
-}
 /* USER CODE END 4 */
 
 /**

@@ -19,7 +19,7 @@ void fileCreate(void)
   f_open(&fil, fileName, FA_CREATE_ALWAYS | FA_WRITE);
 }
 
-void writeString(uint8_t* inputString, uint8_t bytesToWrite)
+void writeStringToFile(uint8_t* inputString, uint8_t bytesToWrite)
 {
   uint8_t bytesWritten;
 

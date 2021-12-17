@@ -13,6 +13,6 @@
 void sdCardInit (void);
 void fileCreate(void);
 void fileClose(void);
-void writeString(uint8_t* inputString, uint8_t bytesToWrite);
+void writeStringToFile(uint8_t* inputString, uint8_t bytesToWrite);
 
 #endif /* INC_SDCARD_H_ */

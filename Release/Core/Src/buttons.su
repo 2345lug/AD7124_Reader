@@ -1,0 +1,3 @@
+buttons.c:11:6:buttonMonitor	16	static
+buttons.c:30:6:HAL_GPIO_EXTI_Rising_Callback	8	static
+buttons.c:43:6:HAL_GPIO_EXTI_Falling_Callback	8	static

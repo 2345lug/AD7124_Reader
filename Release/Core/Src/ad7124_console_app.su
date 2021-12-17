@@ -1,0 +1,2 @@
+ad7124_console_app.c:53:9:ad7124_app_initialize	64	static
+ad7124_console_app.c:121:9:do_continuous_conversion	48	static
